@@ -5,10 +5,10 @@ from flask_admin.contrib import sqla
 from flask_admin import helpers as admin_helpers
 
 from .talky import app
-from .schema import db, User, Role
+from . import schema
 
 
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+user_datastore = SQLAlchemyUserDatastore(schema.db, schema.User, schema.Role)
 security = Security(app, user_datastore)
 
 
@@ -52,8 +52,15 @@ admin = flask_admin.Admin(
 )
 
 # Add model views
-admin.add_view(MyModelView(Role, db.session))
-admin.add_view(MyModelView(User, db.session))
+admin.add_view(MyModelView(schema.Role, schema.db.session))
+admin.add_view(MyModelView(schema.User, schema.db.session))
+admin.add_view(MyModelView(schema.Experiment, schema.db.session))
+admin.add_view(MyModelView(schema.Conference, schema.db.session))
+admin.add_view(MyModelView(schema.Comment, schema.db.session))
+admin.add_view(MyModelView(schema.Submission, schema.db.session))
+admin.add_view(MyModelView(schema.Category, schema.db.session))
+admin.add_view(MyModelView(schema.Talk, schema.db.session))
+admin.add_view(MyModelView(schema.Contact, schema.db.session))
 
 
 # Define a context processor for merging flask-admin's template context into

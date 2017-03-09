@@ -1,8 +1,9 @@
+# [SublimeLinter flake8-max-line-length:100]
 from flask_security.utils import encrypt_password
 
 from .talky import app
 from .login import user_datastore
-from .schema import db, Role
+from .schema import db, Role, Experiment, Conference, Comment, Submission, Category, Talk, Contact
 
 
 def build_sample_db():
@@ -17,6 +18,14 @@ def build_sample_db():
     db.create_all()
 
     with app.app_context():
+        lhcb = Experiment(name='LHCb')
+        belle = Experiment(name='Belle')
+        belle_2 = Experiment(name='Belle 2')
+        db.session.add(lhcb)
+        db.session.add(belle)
+        db.session.add(belle_2)
+        db.session.commit()
+
         user_role = Role(name='user')
         super_user_role = Role(name='superuser')
         db.session.add(user_role)
