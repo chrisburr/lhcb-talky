@@ -1,7 +1,7 @@
-from . import talky
-from . import schema
+from .talky import app
+from .schema import db
+from . import login
 
 __all__ = [
-    'talky',
-    'schema'
+    'app', 'db', 'login'
 ]
