@@ -1,4 +1,4 @@
-# [SublimeLinter flake8-max-line-length:100]
+# [SublimeLinter flake8-max-line-length:120]
 from flask_security.utils import encrypt_password
 
 from .talky import app
@@ -36,7 +36,8 @@ def build_sample_db():
             first_name='Admin',
             email='admin',
             password=encrypt_password('admin'),
-            roles=[user_role, super_user_role]
+            roles=[user_role, super_user_role],
+            experiment=lhcb
         )
 
         first_names = [
@@ -58,7 +59,8 @@ def build_sample_db():
                 last_name=last_names[i],
                 email=tmp_email,
                 password=encrypt_password(tmp_pass),
-                roles=[user_role, ]
+                roles=[user_role, ],
+                experiment=[lhcb, belle, belle_2][i % 3]
             )
         db.session.commit()
     return
