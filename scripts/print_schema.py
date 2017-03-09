@@ -13,7 +13,7 @@ def plot_schema(fn):
         rankdir='LR',
         concentrate=False
     )
-    graph.write_png('dbschema.png')
+    graph.write_pdf('schema.pdf')
 
 
 if __name__ == '__main__':
