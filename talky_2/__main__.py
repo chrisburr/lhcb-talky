@@ -1,4 +1,6 @@
 # [SublimeLinter flake8-max-line-length:120]
+from datetime import datetime
+
 from flask_security.utils import encrypt_password
 
 from .talky import app
@@ -10,7 +12,6 @@ def build_sample_db():
     """
     Populate a small db with some example entries.
     """
-
     import string
     import random
 
@@ -32,12 +33,26 @@ def build_sample_db():
         db.session.add(super_user_role)
         db.session.commit()
 
-        test_user = user_datastore.create_user(
-            first_name='Admin',
+        test_admin = user_datastore.create_user(
+            name='Admin',
             email='admin',
             password=encrypt_password('admin'),
             roles=[user_role, super_user_role],
             experiment=lhcb
+        )
+        test_user_lhcb = user_datastore.create_user(
+            name='User',
+            email='userlhcb',
+            password=encrypt_password('user'),
+            roles=[user_role],
+            experiment=lhcb
+        )
+        test_user_belle = user_datastore.create_user(
+            name='User',
+            email='userbelle',
+            password=encrypt_password('user'),
+            roles=[user_role],
+            experiment=belle
         )
 
         first_names = [
@@ -45,24 +60,25 @@ def build_sample_db():
             'Jacob', 'Thomas', 'Emily', 'Lily', 'Ava', 'Isla', 'Alfie', 'Olivia', 'Jessica',
             'Riley', 'William', 'James', 'Geoffrey', 'Lisa', 'Benjamin', 'Stacey', 'Lucy'
         ]
-        last_names = [
-            'Brown', 'Smith', 'Patel', 'Jones', 'Williams', 'Johnson', 'Taylor', 'Thomas',
-            'Roberts', 'Khan', 'Lewis', 'Jackson', 'Clarke', 'James', 'Phillips', 'Wilson',
-            'Ali', 'Mason', 'Mitchell', 'Rose', 'Davis', 'Davies', 'Rodriguez', 'Cox', 'Alexander'
-        ]
 
+        contacts = []
         for i in range(len(first_names)):
-            tmp_email = first_names[i].lower() + "." + last_names[i].lower() + "@example.com"
-            tmp_pass = ''.join(random.choice(string.ascii_lowercase + string.digits) for i in range(10))
-            user_datastore.create_user(
-                first_name=first_names[i],
-                last_name=last_names[i],
-                email=tmp_email,
-                password=encrypt_password(tmp_pass),
-                roles=[user_role, ],
-                experiment=[lhcb, belle, belle_2][i % 3]
-            )
+            tmp_experiment = [lhcb, belle, belle_2][i % 3]
+            tmp_email = f'{first_names[i].lower()}@{tmp_experiment.name}.com'
+            contacts.append(Contact(email=tmp_email, experiment=tmp_experiment))
+            db.session.add(contacts[-1])
         db.session.commit()
+
+        lhcb_charm = Category(name='Charm', experiment=lhcb, contacts=contacts[:1])
+        belle_charm = Category(name='Charm', experiment=belle, contacts=contacts[1:2])
+        db.session.add(lhcb_charm)
+        db.session.add(belle_charm)
+        db.session.commit()
+
+        lhcb_charm = Conference(name='LLWI 2016', venue='Canada', start_date=datetime.now())
+        db.session.add(lhcb_charm)
+        db.session.commit()
+
     return
 
 

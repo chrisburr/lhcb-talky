@@ -1,5 +1,6 @@
 # [SublimeLinter flake8-max-line-length:120]
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import foreign, remote
 from flask_security import UserMixin, RoleMixin
 
 from .talky import app
@@ -27,7 +28,7 @@ categories_contacts = db.Table(
 interesting_talks_experiment = db.Table(
     'interesting_talks_experiment',
     db.Column('experiment_id', db.Integer(), db.ForeignKey('experiment.id')),
-    db.Column('talk_id', db.Integer(), db.ForeignKey('talk.id'))
+    db.Column('talk_id', db.Integer(), db.ForeignKey('talk.id')),
 )
 
 
@@ -42,11 +43,10 @@ class Role(db.Model, RoleMixin):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(255))
-    last_name = db.Column(db.String(255))
-    email = db.Column(db.String(255), unique=True)
+    name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255))
-    active = db.Column(db.Boolean())
+    active = db.Column(db.Boolean(), nullable=False)
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
@@ -57,7 +57,7 @@ class User(db.Model, UserMixin):
 
 class Experiment(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(80), unique=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
     users = db.relationship('User', backref='experiment', lazy=True)
     talks = db.relationship('Talk', backref='experiment', lazy=True)
     categories = db.relationship('Category', backref='experiment', lazy=True)
@@ -69,14 +69,14 @@ class Experiment(db.Model):
 
 class Conference(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(200))
+    name = db.Column(db.String(200), nullable=False)
     url = db.Column(db.String(1000))
-    venue = db.Column(db.String(200))
-    start_date = db.Column(db.DateTime())
+    venue = db.Column(db.String(200), nullable=False)
+    start_date = db.Column(db.DateTime(), nullable=False)
     talks = db.relationship('Talk', backref='conference', lazy=True)
 
     def __str__(self):
-        return ''
+        return f'{self.name} - {self.start_date}'
 
 
 class Comment(db.Model):
@@ -90,7 +90,7 @@ class Comment(db.Model):
     parent_comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
 
     def __str__(self):
-        return ''
+        return 'TODO'
 
 
 class Submission(db.Model):
@@ -99,45 +99,49 @@ class Submission(db.Model):
     talk_id = db.Column(db.Integer, db.ForeignKey('talk.id'), nullable=False)
 
     def __str__(self):
-        return ''
+        return 'TODO'
 
 
 class Category(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(80), unique=True)
+    name = db.Column(db.String(80), nullable=False)
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
     contacts = db.relationship(
         'Contact', secondary=categories_contacts,
-        backref=db.backref('categories', lazy='dynamic')
+        # primaryjoin='Category.experiment_id == Contact.experiment_id',
+        # primaryjoin='Category.id == categories_contacts.c.category_id',
+        # secondaryjoin='and_(Contact.id == categories_contacts.c.contact_id, Category.experiment_id == Contact.experiment_id)',
+        backref=db.backref('categories')
     )
 
     def __str__(self):
-        return ''
+        return self.name
 
 
 class Talk(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    title = db.Column(db.String(200), unique=True)
-    abstract = db.Column(db.String(10000), unique=True)
-    duration = db.Column(db.String(80), unique=True)
-    speaker = db.Column(db.String(200))
+    title = db.Column(db.String(200), nullable=False)
+    abstract = db.Column(db.String(10000))
+    duration = db.Column(db.String(80), nullable=False)
+    speaker = db.Column(db.String(200), nullable=False)
     submissions = db.relationship('Submission', backref='talk', lazy=True)
     comments = db.relationship('Comment', backref='talk', lazy=True)
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
     conference_id = db.Column(db.Integer, db.ForeignKey('conference.id'), nullable=False)
     interesting_to = db.relationship(
         'Experiment', secondary=interesting_talks_experiment,
-        backref=db.backref('interesting_talks', lazy='dynamic')
+        primaryjoin='Experiment.id!=Talk.experiment_id',
+        backref=db.backref('interesting_talks', lazy='dynamic'), viewonly=True
     )
 
     def __str__(self):
-        return ''
+        return f'{self.title} - {self.conference.name}'
 
 
 class Contact(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    email = db.Column(db.String(200))
+    email = db.Column(db.String(200), nullable=False)
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
 
     def __str__(self):
-        return ''
+        return self.email
