@@ -81,10 +81,10 @@ class Conference(db.Model):
 
 class Comment(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.String(80)
-    email = db.Column(db.String(200))
-    comment = db.Column(db.String(100000))
-    time = db.Column(db.DateTime())
+    name = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(200), nullable=False)
+    comment = db.Column(db.String(100000), nullable=False)
+    time = db.Column(db.DateTime(), nullable=False)
     talk_id = db.Column(db.Integer, db.ForeignKey('talk.id'), nullable=False)
     submission_id = db.Column(db.Integer, db.ForeignKey('submission.id'), nullable=True)
     parent_comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
@@ -108,9 +108,6 @@ class Category(db.Model):
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
     contacts = db.relationship(
         'Contact', secondary=categories_contacts,
-        # primaryjoin='Category.experiment_id == Contact.experiment_id',
-        # primaryjoin='Category.id == categories_contacts.c.category_id',
-        # secondaryjoin='and_(Contact.id == categories_contacts.c.contact_id, Category.experiment_id == Contact.experiment_id)',
         backref=db.backref('categories')
     )
 
@@ -130,8 +127,7 @@ class Talk(db.Model):
     conference_id = db.Column(db.Integer, db.ForeignKey('conference.id'), nullable=False)
     interesting_to = db.relationship(
         'Experiment', secondary=interesting_talks_experiment,
-        primaryjoin='Experiment.id!=Talk.experiment_id',
-        backref=db.backref('interesting_talks', lazy='dynamic'), viewonly=True
+        backref=db.backref('interesting_talks', lazy='dynamic')
     )
 
     def __str__(self):

@@ -3,26 +3,18 @@ from flask_security import current_user
 import flask_admin
 from flask_admin.contrib import sqla
 from flask_admin import helpers as admin_helpers
+from flask_admin.menu import MenuLink
 
 from . import schema
 
 
-def _make_filter(table):
-    def filter_by_experiment():
-        return table.query.filter_by(
-            experiment=current_user.experiment
-        ).all()
-    return filter_by_experiment
-
-
-class MyBaseView(sqla.ModelView):
+class BaseView(sqla.ModelView):
     def __init__(self, table=None, session=None):
         table = table or self._table_class
         session = session or schema.db.session
-        return super(MyBaseView, self).__init__(table, session)
-
-    def is_accessible(self):
-        raise NotImplementedError()
+        super(BaseView, self).__init__(table, session)
+        self.url = self.endpoint
+        self.endpoint = f'{self.endpoint}_{self._endpoint_suffix}'
 
     def _handle_view(self, name, **kwargs):
         # Redirect users when a view is not accessible
@@ -32,92 +24,161 @@ class MyBaseView(sqla.ModelView):
             else:
                 return redirect(url_for('security.login', next=request.url))
 
-    @property
-    def form_columns(self):
-        return self.column_list
+    def _make_filter(self, table):
+        def filter_by_experiment():
+            return table.query.filter_by(
+                **{'experiment': current_user.experiment}
+            ).all()
+        return filter_by_experiment
 
     def __unicode__(self):
         return self.name
 
 
-class AdminView(MyBaseView):
-    def __init__(self, *args, **kwargs):
-        assert 'endpoint' not in kwargs
-        super(AdminView, self).__init__(*args, **kwargs)
-        self.url = self.endpoint
-        self.endpoint = self.endpoint+'_admin'
+class AdminView(BaseView):
+    _endpoint_suffix = 'admin'
 
     def is_accessible(self):
+        # Restrict access to active superusers
         if not current_user.is_active or not current_user.is_authenticated:
             return False
         return current_user.has_role('superuser')
+
+    @property
+    def form_columns(self):
+        if hasattr(self, '_form_columns'):
+            return list(self._form_columns)
+        else:
+            return None
 
     @property
     def column_list(self):
         if hasattr(self, '_column_list'):
             return list(self._column_list)
         else:
-            return None
+            return self.form_columns
 
 
-class UserView(MyBaseView):
-    def __init__(self, *args, **kwargs):
-        assert 'endpoint' not in kwargs
-        super(UserView, self).__init__(*args, **kwargs)
-        self.url = self.endpoint
-        self.endpoint = self.endpoint+'_user'
+class UserView(BaseView):
+    _endpoint_suffix = 'user'
 
     def is_accessible(self):
+        # Restrict access to active users
         if not current_user.is_active or not current_user.is_authenticated:
             return False
         return current_user.has_role('user')
 
     @property
-    def column_list(self):
-        columns = list(self._column_list)
-        if 'experiment' in self._column_list:
+    def form_columns(self):
+        columns = list(self._form_columns)
+        if 'experiment' in self._form_columns:
             columns.pop(columns.index('experiment'))
         return columns
 
+    @property
+    def column_list(self):
+        if hasattr(self, '_column_list'):
+            columns = list(self._column_list)
+            if 'experiment' in self._column_list:
+                columns.pop(columns.index('experiment'))
+            return columns
+        else:
+            return self.form_columns
+
     def get_query(self):
-        # Limit this view to only the current user's experiment
-        return self.session.query(self.model).filter(
-            self.model.experiment == current_user.experiment)
+        if hasattr(self.model, 'experiment'):
+            # Limit this view to only the current user's experiment
+            return self.session.query(self.model).filter(
+                self.model.experiment == current_user.experiment)
+        else:
+            return super(UserView, self).get_query()
 
     def get_count_query(self):
-        # Limit this view to only the current user's experiment
-        return self.session.query(sqla.view.func.count('*')).filter(
-            self.model.experiment == current_user.experiment)
+        if hasattr(self.model, 'experiment'):
+            # Limit this view to only the current user's experiment
+            return self.session.query(sqla.view.func.count('*')).filter(
+                self.model.experiment == current_user.experiment)
+        else:
+            return super(UserView, self).get_count_query()
 
     def create_form(self):
         form = super(UserView, self).create_form()
-        for s in self._add_experiment_filter:
-            getattr(form, s).query_factory = _make_filter(self._table_class)
+        # Filter any query based fields to limit them to the current experiment
+        for name, model in self._add_filter:
+            getattr(form, name).query_factory = self._make_filter(model)
         return form
 
     def edit_form(self, obj):
         form = super(UserView, self).edit_form(obj)
-        for s in self._add_experiment_filter:
-            getattr(form, s).query_factory = _make_filter(self._table_class)
+        # Filter any query based fields to limit them to the current experiment
+        for name, model in self._add_filter:
+            getattr(form, name).query_factory = self._make_filter(model)
         return form
 
     def on_model_change(self, form, model, is_created):
-        model.experiment = current_user.experiment
+        if 'experiment' in self._column_list:
+            # Set the experiment field if present
+            model.experiment = current_user.experiment
         super(UserView, self).on_model_change(form, model, is_created)
 
 
 class DBCategoryView(object):
     _table_class = schema.Category
-    _column_list = ('name', 'contacts', 'experiment')
     _form_columns = ('name', 'contacts', 'experiment')
-    _add_experiment_filter = ('contacts',)
+    _add_filter = [('contacts', schema.Contact)]
 
 
 class DBContactView(object):
     _table_class = schema.Contact
-    _column_list = ('email', 'categories', 'experiment')
     _form_columns = ('email', 'categories', 'experiment')
-    _add_experiment_filter = ('categories',)
+    _add_filter = [('categories', schema.Category)]
+
+
+class DBConferenceView(object):
+    _table_class = schema.Conference
+    _form_columns = ('name', 'venue', 'start_date', 'url')
+    # TODO This isn't robust
+    _add_filter = []
+
+    @property
+    def can_delete(self):
+        return isinstance(self, AdminView)
+
+
+class DBTalkView(object):
+    _table_class = schema.Talk
+    _form_columns = (
+        'conference', 'title', 'duration', 'experiment', 'speaker',
+        'interesting_to', 'abstract'
+    )
+    _column_list = (
+        'conference', 'title', 'duration', 'experiment', 'speaker',
+        'interesting_to'
+    )
+    _add_filter = []
+
+    def _make_filter(self, model):
+        def filter_by_experiment():
+            return model.query.filter(model.id.isnot(current_user.experiment.id)).all()
+        return filter_by_experiment
+
+    def create_form(self):
+        try:
+            form = super(UserView, self).create_form()
+            # Filter any query based fields to limit them to the current experiment
+            getattr(form, 'interesting_to').query_factory = self._make_filter(schema.Experiment)
+        except TypeError:
+            form = super(AdminView, self).create_form()
+        return form
+
+    def edit_form(self, obj):
+        try:
+            form = super(UserView, self).edit_form(obj)
+            # Filter any query based fields to limit them to the current experiment
+            getattr(form, 'interesting_to').query_factory = self._make_filter(schema.Experiment)
+        except TypeError:
+            form = super(AdminView, self).create_form()
+        return form
 
 
 def make_view(user_view, view=None, db=None):
@@ -145,6 +206,8 @@ def create_interface(app, security):
 
     user.add_view(make_view(UserView, view=DBCategoryView))
     user.add_view(make_view(UserView, view=DBContactView))
+    user.add_view(make_view(UserView, view=DBConferenceView))
+    user.add_view(make_view(UserView, view=DBTalkView))
 
     admin = flask_admin.Admin(
         app,
@@ -160,42 +223,10 @@ def create_interface(app, security):
     admin.add_view(make_view(AdminView, db=schema.User))
     admin.add_view(make_view(AdminView, view=DBContactView))
     admin.add_view(make_view(AdminView, view=DBCategoryView))
-    admin.add_view(make_view(AdminView, db=schema.Conference))
-    admin.add_view(make_view(AdminView, db=schema.Talk))
+    admin.add_view(make_view(AdminView, view=DBConferenceView))
+    admin.add_view(make_view(AdminView, view=DBTalkView))
     admin.add_view(make_view(AdminView, db=schema.Submission))
     admin.add_view(make_view(AdminView, db=schema.Comment))
-
-    # admin.add_view(AdminView(
-    #     schema.Role, schema.db.session
-    # ))
-
-    # admin.add_view(AdminView(
-    #     schema.Experiment, schema.db.session
-    # ))
-
-    # admin.add_view(AdminView(
-    #     schema.User, schema.db.session
-    # ))
-
-    # admin.add_view(UserView(
-    #     schema.Contact, schema.db.session
-    # ))
-
-    # admin.add_view(UserView(
-    #     schema.Conference, schema.db.session
-    # ))
-
-    # admin.add_view(UserView(
-    #     schema.Talk, schema.db.session
-    # ))
-
-    # admin.add_view(AdminView(
-    #     schema.Submission, schema.db.session
-    # ))
-
-    # admin.add_view(AdminView(
-    #     schema.Comment, schema.db.session
-    # ))
 
     @security.context_processor
     def security_context_processor_user():
@@ -206,11 +237,11 @@ def create_interface(app, security):
             get_url=url_for
         )
 
-    # @security.context_processor
-    # def security_context_processor_admin():
-    #     return dict(
-    #         admin_base_template=admin.base_template,
-    #         admin_view=admin.index_view,
-    #         h=admin_helpers,
-    #         get_url=url_for
-    #     )
+    @security.context_processor
+    def security_context_processor_admin():
+        return dict(
+            admin_base_template=admin.base_template,
+            admin_view=admin.index_view,
+            h=admin_helpers,
+            get_url=url_for
+        )

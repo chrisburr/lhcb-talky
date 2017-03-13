@@ -75,8 +75,22 @@ def build_sample_db():
         db.session.add(belle_charm)
         db.session.commit()
 
-        lhcb_charm = Conference(name='LLWI 2016', venue='Canada', start_date=datetime.now())
-        db.session.add(lhcb_charm)
+        llwi_2016 = Conference(name='LLWI 2016', venue='Canada', start_date=datetime.now())
+        db.session.add(llwi_2016)
+        morriond_2016 = Conference(name='Moriond 2016', venue='Corshavall', start_date=datetime.now())
+        db.session.add(morriond_2016)
+        db.session.commit()
+
+        charm_prod = Talk(
+            title='Charm Production', duration='12"', speaker='j.b@cern.ch',
+            experiment=lhcb, interesting_to=[belle, belle_2], conference=llwi_2016
+        )
+        db.session.add(charm_prod)
+        ew_prod = Talk(
+            title='EW Production', duration='25"', speaker='b.f@cern.ch',
+            experiment=belle, interesting_to=[lhcb], conference=morriond_2016
+        )
+        db.session.add(ew_prod)
         db.session.commit()
 
     return
