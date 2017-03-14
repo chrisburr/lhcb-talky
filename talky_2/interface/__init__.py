@@ -17,13 +17,12 @@ def create_interface(app, security):
         template_mode='bootstrap3',
         url='/secure/user',
         endpoint='user',
-        index_view=UserHomeView(name='Home', url='/secure/user', endpoint='home')
+        index_view=UserHomeView(name='Talks', url='/secure/user', endpoint='home')
     )
 
     user.add_view(make_view(UserView, view=DBCategoryView))
     user.add_view(make_view(UserView, view=DBContactView))
     user.add_view(make_view(UserView, view=DBConferenceView))
-    user.add_view(make_view(UserView, view=DBTalkView))
 
     admin = flask_admin.Admin(
         app,
@@ -31,8 +30,7 @@ def create_interface(app, security):
         base_template='my_master.html',
         template_mode='bootstrap3',
         url='/secure/admin',
-        endpoint='admin',
-        # index_view=UserHomeView(name='USV', url='/secure/admin', endpoint='admin')
+        endpoint='admin'
     )
 
     admin.add_view(make_view(AdminView, db=schema.Role))
