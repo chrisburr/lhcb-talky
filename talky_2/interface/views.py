@@ -2,10 +2,8 @@ from flask import url_for, redirect, request, abort
 from flask_security import current_user
 import flask_admin
 from flask_admin.contrib import sqla
-from flask_admin import helpers as admin_helpers
-from flask_admin.menu import MenuLink
 
-from . import schema
+from .. import schema
 
 
 class BaseView(sqla.ModelView):
@@ -146,6 +144,12 @@ class DBConferenceView(object):
 
 
 class DBTalkView(object):
+    can_view_details = True
+    column_details_list = (
+        'conference', 'title', 'duration', 'experiment', 'speaker',
+        'interesting_to', 'abstract'
+    )
+    can_export = True
     _table_class = schema.Talk
     _form_columns = (
         'conference', 'title', 'duration', 'experiment', 'speaker',
@@ -192,56 +196,3 @@ def make_view(user_view, view=None, db=None):
         raise ValueError()
 
     return CustomView()
-
-
-def create_interface(app, security):
-    user = flask_admin.Admin(
-        app,
-        'Talky',
-        base_template='my_master.html',
-        template_mode='bootstrap3',
-        url='/secure/user',
-        endpoint='user'
-    )
-
-    user.add_view(make_view(UserView, view=DBCategoryView))
-    user.add_view(make_view(UserView, view=DBContactView))
-    user.add_view(make_view(UserView, view=DBConferenceView))
-    user.add_view(make_view(UserView, view=DBTalkView))
-
-    admin = flask_admin.Admin(
-        app,
-        'Talky - Admin',
-        base_template='my_master.html',
-        template_mode='bootstrap3',
-        url='/secure/admin',
-        endpoint='admin'
-    )
-
-    admin.add_view(make_view(AdminView, db=schema.Role))
-    admin.add_view(make_view(AdminView, db=schema.Experiment))
-    admin.add_view(make_view(AdminView, db=schema.User))
-    admin.add_view(make_view(AdminView, view=DBContactView))
-    admin.add_view(make_view(AdminView, view=DBCategoryView))
-    admin.add_view(make_view(AdminView, view=DBConferenceView))
-    admin.add_view(make_view(AdminView, view=DBTalkView))
-    admin.add_view(make_view(AdminView, db=schema.Submission))
-    admin.add_view(make_view(AdminView, db=schema.Comment))
-
-    @security.context_processor
-    def security_context_processor_user():
-        return dict(
-            admin_base_template=user.base_template,
-            admin_view=user.index_view,
-            h=admin_helpers,
-            get_url=url_for
-        )
-
-    @security.context_processor
-    def security_context_processor_admin():
-        return dict(
-            admin_base_template=admin.base_template,
-            admin_view=admin.index_view,
-            h=admin_helpers,
-            get_url=url_for
-        )

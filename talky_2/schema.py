@@ -2,6 +2,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import foreign, remote
 from flask_security import UserMixin, RoleMixin
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import select
 
 from .talky import app
 
@@ -48,8 +50,10 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean(), nullable=False)
     confirmed_at = db.Column(db.DateTime())
-    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users'))
+
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('users'))
 
     def __str__(self):
         return self.email
@@ -58,10 +62,6 @@ class User(db.Model, UserMixin):
 class Experiment(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
-    users = db.relationship('User', backref='experiment', lazy=True)
-    talks = db.relationship('Talk', backref='experiment', lazy=True)
-    categories = db.relationship('Category', backref='experiment', lazy=True)
-    contacts = db.relationship('Contact', backref='experiment', lazy=True)
 
     def __str__(self):
         return self.name
@@ -73,10 +73,9 @@ class Conference(db.Model):
     url = db.Column(db.String(1000))
     venue = db.Column(db.String(200), nullable=False)
     start_date = db.Column(db.DateTime(), nullable=False)
-    talks = db.relationship('Talk', backref='conference', lazy=True)
 
     def __str__(self):
-        return f'{self.name} - {self.start_date}'
+        return self.name
 
 
 class Comment(db.Model):
@@ -85,8 +84,13 @@ class Comment(db.Model):
     email = db.Column(db.String(200), nullable=False)
     comment = db.Column(db.String(100000), nullable=False)
     time = db.Column(db.DateTime(), nullable=False)
+
     talk_id = db.Column(db.Integer, db.ForeignKey('talk.id'), nullable=False)
+    talk = db.relationship('Talk', backref=db.backref('comments'))
+
     submission_id = db.Column(db.Integer, db.ForeignKey('submission.id'), nullable=True)
+    submission = db.relationship('Submission', backref=db.backref('comments'))
+
     parent_comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
 
     def __str__(self):
@@ -97,6 +101,7 @@ class Submission(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     time = db.Column(db.DateTime())
     talk_id = db.Column(db.Integer, db.ForeignKey('talk.id'), nullable=False)
+    talk = db.relationship('Talk', backref=db.backref('submissions'))
 
     def __str__(self):
         return 'TODO'
@@ -105,7 +110,10 @@ class Submission(db.Model):
 class Category(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), nullable=False)
+
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('categories'))
+
     contacts = db.relationship(
         'Contact', secondary=categories_contacts,
         backref=db.backref('categories')
@@ -121,13 +129,20 @@ class Talk(db.Model):
     abstract = db.Column(db.String(10000))
     duration = db.Column(db.String(80), nullable=False)
     speaker = db.Column(db.String(200), nullable=False)
-    submissions = db.relationship('Submission', backref='talk', lazy=True)
-    comments = db.relationship('Comment', backref='talk', lazy=True)
+
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('talks'))
+
     conference_id = db.Column(db.Integer, db.ForeignKey('conference.id'), nullable=False)
+    conference = db.relationship('Conference', backref=db.backref('talks'))
+
+    @hybrid_property
+    def conference_date(self):
+        return self.conference.start_date
+
     interesting_to = db.relationship(
         'Experiment', secondary=interesting_talks_experiment,
-        backref=db.backref('interesting_talks', lazy='dynamic')
+        backref=db.backref('interesting_talks')
     )
 
     def __str__(self):
@@ -137,7 +152,9 @@ class Talk(db.Model):
 class Contact(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String(200), nullable=False)
+
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('contacts'))
 
     def __str__(self):
         return self.email
