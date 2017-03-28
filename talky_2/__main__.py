@@ -30,11 +30,11 @@ def make_submissions(first_names, conference, talk):
         submissions.append(submission)
 
     current_time = conference.start_date
-    for n_comment in range(random.randrange(5)):
+    for n_comment in range(random.randrange(1, 6)):
         make_comment(first_names, current_time, talk, submissions, parent=None)
 
 
-def make_comment(first_names, current_time, talk, submissions, parent=None):
+def make_comment(first_names, current_time, talk, submissions, parent=None, child_prob=0.75):
     current_time = current_time + get_delta(3)
     name = random.sample(first_names, 2)
     s = [s for s in submissions if s.time < current_time]
@@ -49,9 +49,10 @@ def make_comment(first_names, current_time, talk, submissions, parent=None):
     )
     db.session.add(comment)
     db.session.commit()
-    if random.random() > 0.5:
-        for n_comment in range(1, random.randrange(3)):
-            make_comment(first_names, current_time, talk, submissions, parent=comment.id)
+
+    if random.random() > 1-child_prob:
+        for n_comment in range(random.randrange(1, 4)):
+            make_comment(first_names, current_time, talk, submissions, comment.id, child_prob*0.5)
 
 
 def build_sample_db():
