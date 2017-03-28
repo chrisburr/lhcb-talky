@@ -20,6 +20,20 @@ def get_delta(days=2):
     )
 
 
+def make_submissions(first_names, conference, talk):
+    submissions = []
+    current_time = conference.start_date
+    for n_submission in range(random.randrange(5)):
+        current_time = current_time + get_delta()
+        submission = Submission(talk=talk, time=current_time)
+        db.session.add(submission)
+        submissions.append(submission)
+
+    current_time = conference.start_date
+    for n_comment in range(random.randrange(5)):
+        make_comment(first_names, current_time, talk, submissions, parent=None)
+
+
 def make_comment(first_names, current_time, talk, submissions, parent=None):
     current_time = current_time + get_delta(3)
     name = random.sample(first_names, 2)
@@ -111,36 +125,28 @@ def build_sample_db():
             llwi = Conference(name='LLWI '+str(year), venue='Canada', start_date=conf_time)
             db.session.add(llwi)
             conf_time = datetime.now() - timedelta(days=random.randrange(50, 500))
-            morriond = Conference(name='Moriond '+str(year), venue='Corshavall', start_date=conf_time)
+            morriond = Conference(name='Moriond '+str(year), venue='La Thuile', start_date=conf_time, url=f'http://moriond.in2p3.fr/QCD/{year}/')
             db.session.add(morriond)
             conferences.extend([llwi, morriond])
         db.session.commit()
 
         for conference in conferences:
             charm_prod = Talk(
-                title='Charm hadron production cross-sections at √s = 13 TeV using 300pb⁻¹', duration='12"', speaker='j.b@cern.ch',
+                title='Charm hadron production cross-sections at √s = 13 TeV using 300pb⁻¹', duration=f'{random.randrange(10, 90)}" (+ questions)', speaker=f'{".".join(random.sample(first_names, 2))}@cern.ch',
                 experiment=lhcb, interesting_to=[belle, belle_2], conference=conference, abstract=lipsum.generate_sentences(10)
             )
             db.session.add(charm_prod)
+            db.session.commit()
+            make_submissions(first_names, conference, charm_prod)
 
             ew_prod = Talk(
-                title=lipsum.generate_words(10), duration='25"', speaker='b.f@cern.ch',
+                title=lipsum.generate_words(10), duration=f'{random.randrange(10, 90)}"', speaker=f'{".".join(random.sample(first_names, 2))}@cern.ch',
                 experiment=belle, interesting_to=[lhcb], conference=conference, abstract=lipsum.generate_paragraphs(2)
             )
             db.session.add(ew_prod)
             db.session.commit()
+            make_submissions(first_names, conference, ew_prod)
 
-            submissions = []
-            current_time = conference.start_date
-            for n_submission in range(random.randrange(5)):
-                current_time = current_time + get_delta()
-                submission = Submission(talk=ew_prod, time=current_time)
-                db.session.add(submission)
-                submissions.append(submission)
-
-            current_time = conference.start_date
-            for n_comment in range(random.randrange(5)):
-                make_comment(first_names, current_time, ew_prod, submissions, parent=None)
         db.session.commit()
 
     return

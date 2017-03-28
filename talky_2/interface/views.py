@@ -138,6 +138,9 @@ class DBContactView(object):
 class DBConferenceView(object):
     _table_class = schema.Conference
     _form_columns = ('name', 'venue', 'start_date', 'url')
+    column_formatters = {
+        'start_date': lambda v, c, m, n: str(m.start_date.date())
+    }
     # TODO This isn't robust
     _add_filter = []
 
