@@ -40,7 +40,7 @@
       <table class="table table-hover table-bordered searchable">
         <tr>
           <td><b>Conference</b></td>
-          <td><a href="{{ conference_url }}">{{ conference_name }}</a> <small>({{ conference_start_date }})</small></td>
+          <td><a href="{% if conference_url %}{{ conference_url }}{% else %}#{% endif %}">{{ conference_name }}</a> <small>({{ conference_start_date }})</small></td>
         </tr>
 
         <tr>

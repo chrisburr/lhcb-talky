@@ -1,4 +1,6 @@
 # [SublimeLinter flake8-max-line-length:120]
+import secrets
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import foreign, remote
 from flask_security import UserMixin, RoleMixin
@@ -144,6 +146,8 @@ class Talk(db.Model):
         'Experiment', secondary=interesting_talks_experiment,
         backref=db.backref('interesting_talks')
     )
+
+    view_key = db.Column(db.String(200), nullable=False, default=secrets.token_urlsafe)
 
     def __str__(self):
         return f'{self.title} - {self.conference.name}'

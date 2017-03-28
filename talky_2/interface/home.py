@@ -3,6 +3,10 @@ from math import ceil
 from flask.ext.admin.base import expose
 from flask_admin.contrib import sqla
 from flask_security import current_user
+from flask_admin.helpers import get_redirect_target
+from flask_admin.model.helpers import get_mdict_item_or_list
+from flask import request, redirect, flash, url_for
+from flask_admin.babel import gettext
 
 from .. import schema
 
@@ -83,6 +87,34 @@ class UserHomeView(sqla.ModelView):
             schema.Talk, schema.db.session, name, category, endpoint, url,
             static_folder, menu_class_name, menu_icon_type, menu_icon_value
         )
+
+    def is_accessible(self):
+        # Restrict access to active users
+        if not current_user.is_active or not current_user.is_authenticated:
+            return False
+        return current_user.has_role('user')
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('security.login', next=request.url))
+
+    @expose('/details/')
+    def details_view(self):
+        return_url = get_redirect_target() or self.get_url('.index_view')
+
+        if not self.can_view_details:
+            return redirect(return_url)
+
+        id = get_mdict_item_or_list(request.args, 'id')
+        if id is None:
+            return redirect(return_url)
+
+        talk = self.get_one(id)
+
+        if talk is None:
+            flash(gettext('Record does not exist.'), 'error')
+            return redirect(return_url)
+
+        return redirect(f'/view/{talk.id}/{talk.view_key}')
 
     def _get_list_url(self, view_args):
         """

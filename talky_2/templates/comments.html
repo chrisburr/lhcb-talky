@@ -1,6 +1,6 @@
-{% macro show_comment(name, time, id, comment, replies=none) -%}
+{% macro show_comment(id, name, email, comment, time, submission, replies) -%}
 <div class="media-heading">
-  <button class="btn btn-default btn-collapse btn-xs" type="button" data-toggle="collapse" data-target="#collapse{{ id }}" aria-expanded="false" aria-controls="collapseExample"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button> {{ name }} {{ time }} <a href="#"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a>
+  <button class="btn btn-default btn-collapse btn-xs" type="button" data-toggle="collapse" data-target="#collapse{{ id }}" aria-expanded="false" aria-controls="collapseExample"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button> {{ name }} <small>({{ email }}) {{ time }}</small> {% if submission %}<span class="label label-{% if submissions|length == submission %}success{% else %}default{% endif %}">v{{ submission }}</span>{% endif %} <a href="#"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a>
 </div>
 
 <div class="panel-collapse collapse in" id="collapse{{ id }}">
@@ -8,7 +8,7 @@
   </div>
   <!-- media-left -->
   <div class="media-body">
-    <p>{{ comment }}</p>
+    <p>{% for line in comment.splitlines() %}{{ line }}<br \>{% endfor %}</p>
     <div class="comment-meta">
       <span>
         <a class="" role="button" data-toggle="collapse" href="#replyComment{{ id }}" aria-expanded="false" aria-controls="collapseExample">reply</a>
@@ -27,8 +27,8 @@
     {% if replies %}
     <div class="media">
       <!-- answer to the first comment -->
-      {% for name, time, id, comment, _replies in replies %}
-        {{ show_comment(name, time, id, comment, _replies) }}
+      {% for _id, _name, _email, _comment, _time, _submission, _replies in replies %}
+        {{ show_comment(_id, _name, _email, _comment, _time, _submission, _replies) }}
       {% endfor %}
       <!-- comments -->
     </div>
@@ -40,29 +40,11 @@
 <div class="container">
   <div class="post-comments">
     <div class="row">
-
+      {% for id, name, email, comment, time, submission, replies in comments %}
       <div class="media">
-        {{ show_comment('vertu', '12 sat once yazmis', '0', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
-          ['vertu', '12 sat once yazmis', '1', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
-            ['vertu', '12 sat once yazmis', '2', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
-            ['vertu', '12 sat once yazmis', '3', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
-          ]],
-          ['vertu', '12 sat once yazmis', '4', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
-          ['vertu', '12 sat once yazmis', '5', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []]
-        ]) }}
+        {{ show_comment(id, name, email, comment, time, submission, replies) }}
       </div>
-
-      <div class="media">
-        {{ show_comment('vertu', '12 sat once yazmis', '6', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
-          ['vertu', '12 sat once yazmis', '7', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
-            ['vertu', '12 sat once yazmis', '8', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
-            ['vertu', '12 sat once yazmis', '9', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
-          ]],
-          ['vertu', '12 sat once yazmis', '10', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
-          ['vertu', '12 sat once yazmis', '11', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []]
-        ]) }}
-      </div>
-
+      {% endfor %}
     </div>
   </div>
 </div>

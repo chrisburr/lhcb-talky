@@ -11,13 +11,33 @@ from .login import user_datastore
 from .schema import db, Role, Experiment, Conference, Comment, Submission, Category, Talk, Contact
 
 
-def get_delta():
+def get_delta(days=2):
     return timedelta(
-        days=random.randrange(2),
+        days=random.randrange(days),
         hours=random.randrange(24),
         minutes=random.randrange(60),
         seconds=random.randrange(60)
     )
+
+
+def make_comment(first_names, current_time, talk, submissions, parent=None):
+    current_time = current_time + get_delta(3)
+    name = random.sample(first_names, 2)
+    s = [s for s in submissions if s.time < current_time]
+    comment = Comment(
+        name=' '.join(name),
+        email=f'{name[0]}.{name[1]}@cern.ch',
+        comment=lipsum.generate_sentences(random.randrange(1, 5)),
+        time=current_time,
+        talk=talk,
+        submission=s[-1] if s else None,
+        parent_comment_id=parent
+    )
+    db.session.add(comment)
+    db.session.commit()
+    if random.random() > 0.5:
+        for n_comment in range(1, random.randrange(3)):
+            make_comment(first_names, current_time, talk, submissions, parent=comment.id)
 
 
 def build_sample_db():
@@ -87,9 +107,11 @@ def build_sample_db():
 
         conferences = []
         for year in range(2000, 2020):
-            llwi = Conference(name='LLWI '+str(year), venue='Canada', start_date=datetime.now())
+            conf_time = datetime.now() - timedelta(days=random.randrange(50, 500))
+            llwi = Conference(name='LLWI '+str(year), venue='Canada', start_date=conf_time)
             db.session.add(llwi)
-            morriond = Conference(name='Moriond '+str(year), venue='Corshavall', start_date=datetime.now())
+            conf_time = datetime.now() - timedelta(days=random.randrange(50, 500))
+            morriond = Conference(name='Moriond '+str(year), venue='Corshavall', start_date=conf_time)
             db.session.add(morriond)
             conferences.extend([llwi, morriond])
         db.session.commit()
@@ -100,15 +122,25 @@ def build_sample_db():
                 experiment=lhcb, interesting_to=[belle, belle_2], conference=conference, abstract=lipsum.generate_sentences(10)
             )
             db.session.add(charm_prod)
+
             ew_prod = Talk(
                 title=lipsum.generate_words(10), duration='25"', speaker='b.f@cern.ch',
                 experiment=belle, interesting_to=[lhcb], conference=conference, abstract=lipsum.generate_paragraphs(2)
             )
-            current_time = datetime.now() - timedelta(days=50)
+            db.session.add(ew_prod)
+            db.session.commit()
+
+            submissions = []
+            current_time = conference.start_date
             for n_submission in range(random.randrange(5)):
                 current_time = current_time + get_delta()
-                Submission(talk=ew_prod, time=current_time)
-            db.session.add(ew_prod)
+                submission = Submission(talk=ew_prod, time=current_time)
+                db.session.add(submission)
+                submissions.append(submission)
+
+            current_time = conference.start_date
+            for n_comment in range(random.randrange(5)):
+                make_comment(first_names, current_time, ew_prod, submissions, parent=None)
         db.session.commit()
 
     return
