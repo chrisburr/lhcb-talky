@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, redirect, url_for
 from flask_mail import Mail
 
 from . import default_config
@@ -12,4 +12,4 @@ mail = Mail(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return redirect(url_for('security.login'))

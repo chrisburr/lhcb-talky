@@ -8,7 +8,7 @@
   </div>
   <!-- media-left -->
   <div class="media-body">
-    <p>{% for line in comment.splitlines() %}{{ line }}<br \>{% endfor %}</p>
+    <p>{% if comment %}{% for line in comment.splitlines() %}{{ line }}<br \>{% endfor %}{% endif %}</p>
     <div class="comment-meta">
       <span>
         <a class="" role="button" data-toggle="collapse" href="#replyComment{{ id }}" aria-expanded="false" aria-controls="collapseExample">reply</a>

@@ -70,9 +70,9 @@
         <tr>
           <td><b>Abstract</b></td>
           <td>
-            {% for line in abstract.splitlines() %}
+            {% if abstract %}{% for line in abstract.splitlines() %}
                 {{line}}<br \>
-            {% endfor %}
+            {% endfor %}{% endif %}
           </td>
         </tr>
       </table>
