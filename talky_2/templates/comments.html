@@ -1,0 +1,68 @@
+{% macro show_comment(name, time, id, comment, replies=none) -%}
+<div class="media-heading">
+  <button class="btn btn-default btn-collapse btn-xs" type="button" data-toggle="collapse" data-target="#collapse{{ id }}" aria-expanded="false" aria-controls="collapseExample"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button> {{ name }} {{ time }} <a href="#"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a>
+</div>
+
+<div class="panel-collapse collapse in" id="collapse{{ id }}">
+  <div class="media-left">
+  </div>
+  <!-- media-left -->
+  <div class="media-body">
+    <p>{{ comment }}</p>
+    <div class="comment-meta">
+      <span>
+        <a class="" role="button" data-toggle="collapse" href="#replyComment{{ id }}" aria-expanded="false" aria-controls="collapseExample">reply</a>
+      </span>
+      <div class="collapse" id="replyComment{{ id }}">
+        <form>
+          <div class="form-group">
+            <label for="comment">Your Comment</label>
+            <textarea name="comment" class="form-control" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-default">Send</button>
+        </form>
+      </div>
+    </div>
+    <!-- comment-meta -->
+    {% if replies %}
+    <div class="media">
+      <!-- answer to the first comment -->
+      {% for name, time, id, comment, _replies in replies %}
+        {{ show_comment(name, time, id, comment, _replies) }}
+      {% endfor %}
+      <!-- comments -->
+    </div>
+    {% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+<div class="container">
+  <div class="post-comments">
+    <div class="row">
+
+      <div class="media">
+        {{ show_comment('vertu', '12 sat once yazmis', '0', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
+          ['vertu', '12 sat once yazmis', '1', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
+            ['vertu', '12 sat once yazmis', '2', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
+            ['vertu', '12 sat once yazmis', '3', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
+          ]],
+          ['vertu', '12 sat once yazmis', '4', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
+          ['vertu', '12 sat once yazmis', '5', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []]
+        ]) }}
+      </div>
+
+      <div class="media">
+        {{ show_comment('vertu', '12 sat once yazmis', '6', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
+          ['vertu', '12 sat once yazmis', '7', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', [
+            ['vertu', '12 sat once yazmis', '8', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
+            ['vertu', '12 sat once yazmis', '9', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
+          ]],
+          ['vertu', '12 sat once yazmis', '10', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []],
+          ['vertu', '12 sat once yazmis', '11', 'yazmayın artık amk, görmeyeyim sol framede. insan bi meraklanıyor, ümitleniyor. sonra yine özlem dolu yazıları görüp hayal kırıklığıyla okuyorum.', []]
+        ]) }}
+      </div>
+
+    </div>
+  </div>
+</div>

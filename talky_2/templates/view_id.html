@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Talky</title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <link href="/secure/admin/static/bootstrap/bootstrap3/swatch/default/bootstrap.min.css?v=3.3.5" rel="stylesheet">
+        <link href="/secure/admin/static/bootstrap/bootstrap3/css/bootstrap-theme.min.css?v=3.3.5" rel="stylesheet">
+        <link href="/secure/admin/static/admin/css/bootstrap3/admin.css?v=1.1.1" rel="stylesheet">
+        <style>
+        body {
+            padding-top: 4px;
+        }
+        </style>
+
+  </head>
+  <body>
+    <div class="container">
+      <nav class="navbar navbar-default" role="navigation">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#admin-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/secure/user">Talky</a>
+        </div>
+      </nav>
+
+      <div class="page-header">
+        <h2>EW Production</h2>
+      </div>
+
+      <h1></h1>
+
+      <table class="table table-hover table-bordered searchable">
+        <tr>
+          <td><b>Conference</b></td>
+          <td>Moriond 2019 <small>(2017-03-28)</small></td>
+        </tr>
+
+        <tr>
+          <td><b>Speaker</b></td>
+          <td><a href="mailto:b.f@cern.ch">b.f@cern.ch</a> <small>(Belle)</small></td>
+        </tr>
+
+        <!-- <tr>
+          <td><b>Interesting To</b></td>
+          <td>LHCb</td>
+        </tr> -->
+
+        <tr>
+          <td><b>Duration</b></td>
+          <td>25&#34;</td>
+        </tr>
+
+        <tr>
+          <td><b>Submissions</b></td>
+          <td><p>
+            <a href="submission/v1"><span class="label label-default">v1 (2017-03-12 12:45)</span></a>
+            <a href="submission/v2"><span class="label label-default">v2 (2017-03-12 12:45)</span></a>
+            <a href="submission/v3"><span class="label label-default">v3 (2017-03-12 12:45)</span></a>
+            <a href="submission/v4"><span class="label label-success">v4 (2017-03-12 12:45)</span></a>
+          </p></td>
+        </tr>
+
+        <tr>
+          <td><b>Abstract</b></td>
+          <td><p>Heri, inquam, ludis commissis ex urbe profectus veni ad vesperum.
+causa autem fuit huc veniendi ut quosdam hinc libros promerem. et
+quidem, Cato, hanc totam copiam iam Lucullo nostro notam esse oportebit;
+nam his libris eum malo quam reliquo ornatu villae delectari. est enim
+mihi magnae curae - quamquam hoc quidem proprium tuum munus est - ut ita
+erudiatur, ut et patri et Caepioni nostro et tibi tam propinquo
+respondeat. laboro autem non sine causa; nam et avi eius memoria moveor
+- nec enim ignoras, quanti fecerim Caepionem, qui, ut opinio mea fert,
+in principibus iam esset, si viveret - et Lucullus mihi versatur ante
+oculos, vir cum virtutibus omnibus excellens, tum mecum et amicitia et
+omni voluntate sententiaque coniunctus.</p>
+<p>Praeclare, inquit, facis, cum et eorum memoriam tenes, quorum uterque
+tibi testamento liberos suos commendavit, et puerum diligis. quod autem
+meum munus dicis non equidem recuso, sed te adiungo socium. addo etiam
+illud, multa iam mihi dare signa puerum et pudoris et ingenii, sed
+aetatem vides.</p></td>
+        </tr>
+      </table>
+
+      {% include 'comments.html' %}
+    </div>
+
+    <script src="/secure/admin/static/vendor/jquery.min.js?v=2.1.4" type="text/javascript"></script>
+    <script src="/secure/admin/static/bootstrap/bootstrap3/js/bootstrap.min.js?v=3.3.5" type="text/javascript"></script>
+    <script src="/secure/admin/static/vendor/moment.min.js?v=2.9.0" type="text/javascript"></script>
+    <script src="/secure/admin/static/vendor/select2/select2.min.js?v=3.5.2" type="text/javascript"></script>
+    <script src="/secure/admin/static/admin/js/details_filter.js?v=1.0.0"></script>
+  </body>
+</html>

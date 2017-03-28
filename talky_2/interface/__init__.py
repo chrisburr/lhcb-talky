@@ -7,6 +7,7 @@ from .. import schema
 from .views import make_view, UserView, AdminView
 from .views import DBCategoryView, DBContactView, DBConferenceView, DBTalkView
 from .home import UserHomeView
+from . import display
 
 
 def create_interface(app, security):
@@ -42,6 +43,8 @@ def create_interface(app, security):
     admin.add_view(make_view(AdminView, view=DBTalkView))
     admin.add_view(make_view(AdminView, db=schema.Submission))
     admin.add_view(make_view(AdminView, db=schema.Comment))
+
+    display.create_display()
 
     @security.context_processor
     def security_context_processor_user():
