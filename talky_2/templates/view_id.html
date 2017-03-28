@@ -33,20 +33,19 @@
       </nav>
 
       <div class="page-header">
-        <h2>EW Production</h2>
+        <h2>{{ title }}</h2>
       </div>
 
       <h1></h1>
-
       <table class="table table-hover table-bordered searchable">
         <tr>
           <td><b>Conference</b></td>
-          <td>Moriond 2019 <small>(2017-03-28)</small></td>
+          <td><a href="{{ conference_url }}">{{ conference_name }}</a> <small>({{ conference_start_date }})</small></td>
         </tr>
 
         <tr>
           <td><b>Speaker</b></td>
-          <td><a href="mailto:b.f@cern.ch">b.f@cern.ch</a> <small>(Belle)</small></td>
+          <td><a href="mailto:{{ speaker }}">{{ speaker }}</a> <small>({{ experiment }})</small></td>
         </tr>
 
         <!-- <tr>
@@ -56,37 +55,25 @@
 
         <tr>
           <td><b>Duration</b></td>
-          <td>25&#34;</td>
+          <td>{{ duration }}</td>
         </tr>
 
         <tr>
           <td><b>Submissions</b></td>
           <td><p>
-            <a href="submission/v1"><span class="label label-default">v1 (2017-03-12 12:45)</span></a>
-            <a href="submission/v2"><span class="label label-default">v2 (2017-03-12 12:45)</span></a>
-            <a href="submission/v3"><span class="label label-default">v3 (2017-03-12 12:45)</span></a>
-            <a href="submission/v4"><span class="label label-success">v4 (2017-03-12 12:45)</span></a>
+            {% for id, time in submissions %}
+            <a href="submission/v{{ loop.index }}"><span class="label label-{% if loop.last %}success{% else %}default{% endif %}">v{{ loop.index }} ({{ time }})</span></a>
+            {% endfor %}
           </p></td>
         </tr>
 
         <tr>
           <td><b>Abstract</b></td>
-          <td><p>Heri, inquam, ludis commissis ex urbe profectus veni ad vesperum.
-causa autem fuit huc veniendi ut quosdam hinc libros promerem. et
-quidem, Cato, hanc totam copiam iam Lucullo nostro notam esse oportebit;
-nam his libris eum malo quam reliquo ornatu villae delectari. est enim
-mihi magnae curae - quamquam hoc quidem proprium tuum munus est - ut ita
-erudiatur, ut et patri et Caepioni nostro et tibi tam propinquo
-respondeat. laboro autem non sine causa; nam et avi eius memoria moveor
-- nec enim ignoras, quanti fecerim Caepionem, qui, ut opinio mea fert,
-in principibus iam esset, si viveret - et Lucullus mihi versatur ante
-oculos, vir cum virtutibus omnibus excellens, tum mecum et amicitia et
-omni voluntate sententiaque coniunctus.</p>
-<p>Praeclare, inquit, facis, cum et eorum memoriam tenes, quorum uterque
-tibi testamento liberos suos commendavit, et puerum diligis. quod autem
-meum munus dicis non equidem recuso, sed te adiungo socium. addo etiam
-illud, multa iam mihi dare signa puerum et pudoris et ingenii, sed
-aetatem vides.</p></td>
+          <td>
+            {% for line in abstract.splitlines() %}
+                {{line}}<br \>
+            {% endfor %}
+          </td>
         </tr>
       </table>
 

@@ -1,19 +1,29 @@
 # [SublimeLinter flake8-max-line-length:120]
-from datetime import datetime
+from datetime import datetime, timedelta
+import string
+import random
 
 from flask_security.utils import encrypt_password
+import lipsum
 
 from .talky import app
 from .login import user_datastore
 from .schema import db, Role, Experiment, Conference, Comment, Submission, Category, Talk, Contact
 
 
+def get_delta():
+    return timedelta(
+        days=random.randrange(2),
+        hours=random.randrange(24),
+        minutes=random.randrange(60),
+        seconds=random.randrange(60)
+    )
+
+
 def build_sample_db():
     """
     Populate a small db with some example entries.
     """
-    import string
-    import random
 
     db.drop_all()
     db.create_all()
@@ -87,13 +97,17 @@ def build_sample_db():
         for conference in conferences:
             charm_prod = Talk(
                 title='Charm hadron production cross-sections at √s = 13 TeV using 300pb⁻¹', duration='12"', speaker='j.b@cern.ch',
-                experiment=lhcb, interesting_to=[belle, belle_2], conference=conference
+                experiment=lhcb, interesting_to=[belle, belle_2], conference=conference, abstract=lipsum.generate_sentences(10)
             )
             db.session.add(charm_prod)
             ew_prod = Talk(
-                title='EW Production', duration='25"', speaker='b.f@cern.ch',
-                experiment=belle, interesting_to=[lhcb], conference=conference
+                title=lipsum.generate_words(10), duration='25"', speaker='b.f@cern.ch',
+                experiment=belle, interesting_to=[lhcb], conference=conference, abstract=lipsum.generate_paragraphs(2)
             )
+            current_time = datetime.now() - timedelta(days=50)
+            for n_submission in range(random.randrange(5)):
+                current_time = current_time + get_delta()
+                Submission(talk=ew_prod, time=current_time)
             db.session.add(ew_prod)
         db.session.commit()
 
