@@ -7,12 +7,14 @@ from .. import schema
 
 
 class BaseView(sqla.ModelView):
-    def __init__(self, table=None, session=None):
+    def __init__(self, table=None, session=None, **kwargs):
         table = table or self._table_class
         session = session or schema.db.session
-        super(BaseView, self).__init__(table, session)
-        self.url = self.endpoint
-        self.endpoint = f'{self.endpoint}_{self._endpoint_suffix}'
+        super(BaseView, self).__init__(table, session, **kwargs)
+        if 'url' not in kwargs:
+            self.url = self.endpoint
+        if 'endpoint' not in kwargs:
+            self.endpoint = f'{self.endpoint}_{self._endpoint_suffix}'
 
     def _handle_view(self, name, **kwargs):
         # Redirect users when a view is not accessible
@@ -84,7 +86,7 @@ class UserView(BaseView):
             return self.form_columns
 
     def get_query(self):
-        if hasattr(self.model, 'experiment'):
+        if hasattr(self.model, 'experiment') and self.model != schema.Talk:
             # Limit this view to only the current user's experiment
             return self.session.query(self.model).filter(
                 self.model.experiment == current_user.experiment)
@@ -92,7 +94,7 @@ class UserView(BaseView):
             return super(UserView, self).get_query()
 
     def get_count_query(self):
-        if hasattr(self.model, 'experiment'):
+        if hasattr(self.model, 'experiment') and self.model != schema.Talk:
             # Limit this view to only the current user's experiment
             return self.session.query(sqla.view.func.count('*')).filter(
                 self.model.experiment == current_user.experiment)
@@ -114,7 +116,8 @@ class UserView(BaseView):
         return form
 
     def on_model_change(self, form, model, is_created):
-        if 'experiment' in self._column_list:
+        # if 'experiment' in self.column_list:
+        if hasattr(model, 'experiment'):
             # Set the experiment field if present
             model.experiment = current_user.experiment
         super(UserView, self).on_model_change(form, model, is_created)

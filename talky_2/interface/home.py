@@ -9,9 +9,10 @@ from flask import request, redirect, flash, url_for
 from flask_admin.babel import gettext
 
 from .. import schema
+from . import views
 
 
-class UserHomeView(sqla.ModelView):
+class UserHomeView(views.DBTalkView, views.UserView):
     # Permissions
     can_create = True
     can_edit = False
@@ -62,7 +63,6 @@ class UserHomeView(sqla.ModelView):
     form = None
     # form_base_class = BaseForm
     form_args = None
-    form_columns = None
     form_overrides = None
     form_widget_args = None
     form_extra_fields = None
@@ -84,8 +84,10 @@ class UserHomeView(sqla.ModelView):
                  static_folder=None, menu_class_name=None, menu_icon_type=None,
                  menu_icon_value=None):
         super(UserHomeView, self).__init__(
-            schema.Talk, schema.db.session, name, category, endpoint, url,
-            static_folder, menu_class_name, menu_icon_type, menu_icon_value
+            schema.Talk, schema.db.session, name=name, category=category,
+            endpoint=endpoint, url=url, static_folder=static_folder,
+            menu_class_name=menu_class_name, menu_icon_type=menu_icon_type,
+            menu_icon_value=menu_icon_value
         )
 
     def is_accessible(self):
@@ -188,8 +190,6 @@ class UserHomeView(sqla.ModelView):
             pass
         else:
             raise RuntimeError(view_type)
-        print('*'*100, view_args.filters)
-        print(view_args)
 
         # Get count and data
         count, data = self.get_list(view_args.page, sort_column, view_args.sort_desc,
