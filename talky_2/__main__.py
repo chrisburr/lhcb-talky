@@ -99,6 +99,13 @@ def build_sample_db():
             roles=[user_role],
             experiment=belle
         )
+        test_user_belle2 = user_datastore.create_user(
+            name='User',
+            email='userbelle2',
+            password=encrypt_password('user'),
+            roles=[user_role],
+            experiment=belle_2
+        )
 
         first_names = [
             'Harry', 'Amelia', 'Oliver', 'Jack', 'Isabella', 'Charlie', 'Sophie', 'Mia',
@@ -140,13 +147,21 @@ def build_sample_db():
             db.session.commit()
             make_submissions(first_names, conference, charm_prod)
 
-            ew_prod = Talk(
+            talk = Talk(
                 title=lipsum.generate_words(10), duration=f'{random.randrange(10, 90)}"', speaker=f'{".".join(random.sample(first_names, 2))}@cern.ch',
                 experiment=belle, interesting_to=[lhcb], conference=conference, abstract=lipsum.generate_paragraphs(2)
             )
-            db.session.add(ew_prod)
+            db.session.add(talk)
             db.session.commit()
-            make_submissions(first_names, conference, ew_prod)
+            make_submissions(first_names, conference, talk)
+
+            talk = Talk(
+                title=lipsum.generate_words(10), duration=f'{random.randrange(10, 90)}"', speaker=f'{".".join(random.sample(first_names, 2))}@cern.ch',
+                experiment=belle_2, interesting_to=[belle], conference=conference, abstract=lipsum.generate_paragraphs(2)
+            )
+            db.session.add(talk)
+            db.session.commit()
+            make_submissions(first_names, conference, talk)
 
         db.session.commit()
 
