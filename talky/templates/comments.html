@@ -13,13 +13,38 @@
       <span>
         <a class="" role="button" data-toggle="collapse" href="#replyComment{{ id }}" aria-expanded="false" aria-controls="collapseExample">reply</a>
       </span>
-      <div class="collapse" id="replyComment{{ id }}">
-        <form>
-          <div class="form-group">
-            <label for="comment">Your Comment</label>
-            <textarea name="comment" class="form-control" rows="3"></textarea>
+      <div class="collapse well" id="replyComment{{ id }}">
+        <form action="comment/" method="POST" name="comment_form_{{ id }}">
+          <input type="hidden" name="parent_comment_id" value="{{ id }}"/>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <div class="row">
+            <div class="col-lg-5">
+              <div class="form-group">
+                <div class="input-group">
+                  <span class="input-group-addon" for="name" id="basic-addon1">Name</span>
+                  <input class="form-control" id="name" name="name" type="text" value="" required>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="form-group">
+                <div class="input-group">
+                  <span class="input-group-addon" for="email" id="basic-addon1">Email</span>
+                  <input class="form-control" id="email" name="email" type="text" value="" required>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-2 text-center">
+              <input class="btn btn-primary" clatext-centerss="form-control" type="submit" value="Submit">
+            </div>
           </div>
-          <button type="submit" class="btn btn-default">Send</button>
+          <div class="form-horizontal">
+            <div class="form-group">
+              <div class="col-md-12">
+                <textarea class="form-control" rows="3" id="comment" name="comment"  placeholder="Comment" required></textarea>
+              </div>
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -28,7 +53,9 @@
     <div class="media">
       <!-- answer to the first comment -->
       {% for _id, _name, _email, _comment, _time, _submission, _replies in replies %}
+      <div class="well">
         {{ show_comment(_id, _name, _email, _comment, _time, _submission, _replies) }}
+      </div>
       {% endfor %}
       <!-- comments -->
     </div>
@@ -41,7 +68,7 @@
   <div class="post-comments">
     <div class="row">
       {% for id, name, email, comment, time, submission, replies in comments %}
-      <div class="media">
+      <div class="media well">
         {{ show_comment(id, name, email, comment, time, submission, replies) }}
       </div>
       {% endfor %}

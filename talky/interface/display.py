@@ -1,6 +1,7 @@
 from collections import namedtuple
+from datetime import datetime
 
-from flask import render_template, abort
+from flask import render_template, abort, redirect, request
 
 from ..talky import app
 from .. import schema
@@ -23,9 +24,8 @@ def recurse_comments(comments):
     return _comments
 
 
-@app.route('/view/<talk_id>/<view_key>')
-def period_info(talk_id=None, view_key=None):
-    # TODO Sanitise talk_id
+@app.route('/view/<talk_id>/<view_key>/')
+def view_talk(talk_id=None, view_key=None):
     talk = schema.Talk.query.get(talk_id)
     if not talk or talk.view_key != view_key:
         abort(404)
@@ -55,6 +55,40 @@ def period_info(talk_id=None, view_key=None):
         submissions=submissions,
         comments=comments,
     )
+
+
+@app.route('/view/<talk_id>/<view_key>/comment/', methods=['POST'])
+def submit_comment(talk_id=None, view_key=None):
+    talk = schema.Talk.query.get(talk_id)
+    if not talk or talk.view_key != view_key:
+        abort(404)
+
+    if not all([request.form['name'].strip(), request.form['email'].strip(), request.form['comment'].strip()]):
+        abort(400)
+
+    parent_comment_id = int(request.form['parent_comment_id'])
+    print(parent_comment_id, [c.id for c in talk.comments])
+    if not any(parent_comment_id == c.id for c in talk.comments):
+        abort(410)
+
+    if talk.submissions:
+        submission = sorted(talk.submissions, key=lambda s: s.time)[-1]
+    else:
+        submission = None
+
+    comment = schema.Comment(
+        name=request.form['name'].strip(),
+        email=request.form['email'].strip(),
+        comment=request.form['comment'].strip(),
+        time=datetime.now(),
+        talk=talk,
+        submission=submission,
+        parent_comment_id=parent_comment_id
+    )
+    schema.db.session.add(comment)
+    schema.db.session.commit()
+
+    return redirect(f'/view/{talk_id}/{view_key}/')
 
 
 def create_display():
