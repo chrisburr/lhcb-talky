@@ -2,6 +2,7 @@ from collections import namedtuple
 from datetime import datetime
 
 from flask import render_template, abort, redirect, request
+from flask_security import current_user
 
 from ..talky import app
 from .. import schema
@@ -23,11 +24,23 @@ def recurse_comments(comments):
     return comment_index[None][-1]
 
 
-@app.route('/view/<talk_id>/<view_key>/')
-def view_talk(talk_id=None, view_key=None):
+def get_talk(talk_id, view_key):
     talk = schema.Talk.query.get(talk_id)
     if not talk or talk.view_key != view_key:
         abort(404)
+    return talk
+
+
+def user_can_edit(talk):
+    return current_user.is_authenticated and (
+        current_user.experiment == talk.experiment or
+        current_user.has_role('superuser')
+    )
+
+
+@app.route('/view/<talk_id>/<view_key>/')
+def view_talk(talk_id=None, view_key=None):
+    talk = get_talk(talk_id, view_key)
 
     submissions = [
         [s.id, s.time.strftime("%Y-%m-%d %H:%M")]
@@ -53,14 +66,13 @@ def view_talk(talk_id=None, view_key=None):
         conference_start_date=talk.conference.start_date.date(),
         submissions=submissions,
         comments=comments,
+        modify=user_can_edit(talk)
     )
 
 
 @app.route('/view/<talk_id>/<view_key>/comment/', methods=['POST'])
 def submit_comment(talk_id=None, view_key=None):
-    talk = schema.Talk.query.get(talk_id)
-    if not talk or talk.view_key != view_key:
-        abort(404)
+    talk = get_talk(talk_id, view_key)
 
     if not all([request.form['name'].strip(), request.form['email'].strip(), request.form['comment'].strip()]):
         abort(400)
@@ -91,6 +103,27 @@ def submit_comment(talk_id=None, view_key=None):
         parent_comment_id=parent_comment_id
     )
     schema.db.session.add(comment)
+    schema.db.session.commit()
+
+    return redirect(f'/view/{talk_id}/{view_key}/')
+
+
+@app.route('/view/<talk_id>/<view_key>/comment/<comment_id>/delete/', methods=['GET'])
+def delete_comment(talk_id=None, view_key=None, comment_id=None):
+    talk = get_talk(talk_id, view_key)
+    if not user_can_edit(talk):
+        abort(404)
+
+    try:
+        comment_id = int(comment_id)
+    except Exception:
+        abort(410)
+
+    comment = schema.Comment.query.get(comment_id)
+    if not comment or comment.talk != talk:
+        abort(404)
+
+    schema.db.session.delete(comment)
     schema.db.session.commit()
 
     return redirect(f'/view/{talk_id}/{view_key}/')

@@ -37,6 +37,8 @@ class BaseView(sqla.ModelView):
 
 class AdminView(BaseView):
     _endpoint_suffix = 'admin'
+    page_size = 200
+    can_set_page_size = True
 
     def is_accessible(self):
         # Restrict access to active superusers

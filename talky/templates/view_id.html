@@ -62,6 +62,7 @@
           <td><b>Submissions</b></td>
           <td><p>
             {% for id, time in submissions %}
+            {% if modify %} <a href="#"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a> {% endif -%}
             <a href="submission/v{{ loop.index }}"><span class="label label-{% if loop.last %}success{% else %}default{% endif %}">v{{ loop.index }} ({{ time }})</span></a>
             {% endfor %}
           </p></td>
