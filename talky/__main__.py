@@ -1,12 +1,15 @@
 # [SublimeLinter flake8-max-line-length:120]
 from datetime import datetime, timedelta
-import string
 import random
+import os
+from os.path import join, isdir
 
+from matplotlib import pyplot as plt
 from flask_security.utils import encrypt_password
 import lipsum
 
 from .talky import app
+from .default_config import file_path
 from .login import user_datastore
 from .schema import db, Role, Experiment, Conference, Comment, Submission, Category, Talk, Contact
 
@@ -20,12 +23,23 @@ def get_delta(days=2):
     )
 
 
+def make_example_submission(talk, version):
+    plt.title(talk.title)
+    plt.text(0.1, 0.5, talk.experiment.name)
+    submission_dir = join(file_path, str(talk.id), str(version))
+    assert not isdir(submission_dir)
+    os.makedirs(submission_dir)
+    plt.savefig(join(submission_dir, 'my_example_file.pdf'))
+    plt.close()
+
+
 def make_submissions(first_names, conference, talk):
     submissions = []
     current_time = conference.start_date
-    for n_submission in range(random.randrange(5)):
+    for version, n_submission in enumerate(range(random.randrange(5)), start=1):
+        make_example_submission(talk, version)
         current_time = current_time + get_delta()
-        submission = Submission(talk=talk, time=current_time)
+        submission = Submission(talk=talk, time=current_time, version=version, filename='my_example_file.pdf')
         db.session.add(submission)
         submissions.append(submission)
 
@@ -164,8 +178,6 @@ def build_sample_db():
             make_submissions(first_names, conference, talk)
 
         db.session.commit()
-
-    return
 
 
 if __name__ == '__main__':

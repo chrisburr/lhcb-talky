@@ -1,13 +1,15 @@
 # [SublimeLinter flake8-max-line-length:120]
+import os
+from os.path import join
 import secrets
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import foreign, remote
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import select
+from sqlalchemy.event import listens_for
 
 from .talky import app
+from .default_config import file_path, cleanup_files
 
 __all__ = [
     'db', 'Role', 'User', 'Experiment', 'Conference', 'Comment', 'Submission',
@@ -104,10 +106,24 @@ class Submission(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     time = db.Column(db.DateTime())
     talk_id = db.Column(db.Integer, db.ForeignKey('talk.id', ondelete='CASCADE'), nullable=False)
-    talk = db.relationship('Talk', backref=db.backref('submissions', cascade='all, delete-orphan'))
+    talk = db.relationship('Talk', backref=db.backref('submissions', cascade='all, delete-orphan', lazy='dynamic'))
+
+    version = db.Column(db.Integer(), nullable=False)
+    filename = db.Column(db.String(200), nullable=False)
 
     def __str__(self):
         return 'TODO'
+
+
+# Delete hooks for models, delete files if models are getting deleted
+@listens_for(Submission, 'after_delete')
+def delete_file(mapper, connection, target):
+    if target.filename and cleanup_files:
+        try:
+            os.remove(join(file_path, str(target.talk.id), str(target.version), target.filename))
+        except OSError:
+            # Don't care if was not deleted because it does not exist
+            pass
 
 
 class Category(db.Model):
@@ -126,7 +142,7 @@ class Category(db.Model):
 class Talk(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    abstract = db.Column(db.String(10000))
+    abstract = db.Column(db.String(100000))
     duration = db.Column(db.String(80), nullable=False)
     speaker = db.Column(db.String(200), nullable=False)
 
@@ -146,6 +162,7 @@ class Talk(db.Model):
     )
 
     view_key = db.Column(db.String(200), nullable=False, default=secrets.token_urlsafe)
+    manage_key = db.Column(db.String(200), nullable=False, default=secrets.token_urlsafe)
 
     def __str__(self):
         return f'{self.title} - {self.conference.name}'

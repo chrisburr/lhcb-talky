@@ -1,11 +1,13 @@
 from collections import namedtuple
 from datetime import datetime
+from os.path import join, isfile
 
-from flask import render_template, abort, redirect, request
+from flask import render_template, abort, redirect, request, send_file
 from flask_security import current_user
 
 from ..talky import app
 from .. import schema
+from ..default_config import file_path
 
 Comment = namedtuple(
     'Comment',
@@ -124,6 +126,48 @@ def delete_comment(talk_id=None, view_key=None, comment_id=None):
         abort(404)
 
     schema.db.session.delete(comment)
+    schema.db.session.commit()
+
+    return redirect(f'/view/{talk_id}/{view_key}/')
+
+
+@app.route('/view/<talk_id>/<view_key>/submission/v<version>/', methods=['GET'])
+def view_submission(talk_id=None, view_key=None, version=None):
+    talk = get_talk(talk_id, view_key)
+
+    try:
+        version = int(version)
+    except Exception:
+        abort(410)
+
+    submission = talk.submissions.filter(schema.Submission.version == version).first()
+    if not submission:
+        abort(404)
+
+    submission_fn = join(file_path, str(talk.id), str(submission.version), submission.filename)
+
+    if isfile(submission_fn):
+        return send_file(submission_fn)
+    else:
+        abort(410)
+
+
+@app.route('/view/<talk_id>/<view_key>/submission/<submission_id>/delete/', methods=['GET'])
+def delete_submission(talk_id=None, view_key=None, submission_id=None):
+    talk = get_talk(talk_id, view_key)
+    if not user_can_edit(talk):
+        abort(404)
+
+    try:
+        submission_id = int(submission_id)
+    except Exception:
+        abort(410)
+
+    submission = schema.Submission.query.get(submission_id)
+    if not submission or submission.talk != talk:
+        abort(404)
+
+    schema.db.session.delete(submission)
     schema.db.session.commit()
 
     return redirect(f'/view/{talk_id}/{view_key}/')
