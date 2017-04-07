@@ -54,8 +54,8 @@ class User(db.Model, UserMixin):
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users'))
 
-    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
-    experiment = db.relationship('Experiment', backref=db.backref('users'))
+    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id', ondelete='CASCADE'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('users', cascade='all, delete-orphan'))
 
     def __str__(self):
         return self.email
@@ -87,13 +87,14 @@ class Comment(db.Model):
     comment = db.Column(db.String(100000), nullable=False)
     time = db.Column(db.DateTime(), nullable=False)
 
-    talk_id = db.Column(db.Integer, db.ForeignKey('talk.id'), nullable=False)
-    talk = db.relationship('Talk', backref=db.backref('comments'))
+    talk_id = db.Column(db.Integer, db.ForeignKey('talk.id', ondelete='CASCADE'), nullable=False)
+    talk = db.relationship('Talk', backref=db.backref('comments', cascade='all, delete-orphan'))
 
     submission_id = db.Column(db.Integer, db.ForeignKey('submission.id'), nullable=True)
     submission = db.relationship('Submission', backref=db.backref('comments'))
 
-    parent_comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
+    parent_comment_id = db.Column(db.Integer, db.ForeignKey('comment.id', ondelete='CASCADE'), nullable=True)
+    children = db.relationship('Comment', cascade='all', backref=db.backref('parent', remote_side=[id]))
 
     def __str__(self):
         return 'TODO'
@@ -102,8 +103,8 @@ class Comment(db.Model):
 class Submission(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     time = db.Column(db.DateTime())
-    talk_id = db.Column(db.Integer, db.ForeignKey('talk.id'), nullable=False)
-    talk = db.relationship('Talk', backref=db.backref('submissions'))
+    talk_id = db.Column(db.Integer, db.ForeignKey('talk.id', ondelete='CASCADE'), nullable=False)
+    talk = db.relationship('Talk', backref=db.backref('submissions', cascade='all, delete-orphan'))
 
     def __str__(self):
         return 'TODO'
@@ -113,13 +114,10 @@ class Category(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), nullable=False)
 
-    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
-    experiment = db.relationship('Experiment', backref=db.backref('categories'))
+    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id', ondelete='CASCADE'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('categories', cascade='all, delete-orphan'))
 
-    contacts = db.relationship(
-        'Contact', secondary=categories_contacts,
-        backref=db.backref('categories')
-    )
+    contacts = db.relationship('Contact', secondary=categories_contacts, backref=db.backref('categories'))
 
     def __str__(self):
         return self.name
@@ -132,11 +130,11 @@ class Talk(db.Model):
     duration = db.Column(db.String(80), nullable=False)
     speaker = db.Column(db.String(200), nullable=False)
 
-    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
-    experiment = db.relationship('Experiment', backref=db.backref('talks'))
+    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id', ondelete='CASCADE'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('talks', cascade='all, delete-orphan'))
 
-    conference_id = db.Column(db.Integer, db.ForeignKey('conference.id'), nullable=False)
-    conference = db.relationship('Conference', backref=db.backref('talks'))
+    conference_id = db.Column(db.Integer, db.ForeignKey('conference.id', ondelete='CASCADE'), nullable=False)
+    conference = db.relationship('Conference', backref=db.backref('talks', cascade='all, delete-orphan'))
 
     @hybrid_property
     def conference_date(self):
@@ -157,8 +155,8 @@ class Contact(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String(200), nullable=False)
 
-    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id'), nullable=False)
-    experiment = db.relationship('Experiment', backref=db.backref('contacts'))
+    experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id', ondelete='CASCADE'), nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('contacts', cascade='all, delete-orphan'))
 
     def __str__(self):
         return self.email
