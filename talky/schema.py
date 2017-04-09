@@ -145,6 +145,7 @@ class Talk(db.Model):
     abstract = db.Column(db.String(100000))
     duration = db.Column(db.String(80), nullable=False)
     speaker = db.Column(db.String(200), nullable=False)
+    n_submissions = db.Column(db.Integer(), nullable=False, default=int)
 
     experiment_id = db.Column(db.Integer, db.ForeignKey('experiment.id', ondelete='CASCADE'), nullable=False)
     experiment = db.relationship('Experiment', backref=db.backref('talks', cascade='all, delete-orphan'))

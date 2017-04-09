@@ -36,7 +36,9 @@ def make_example_submission(talk, version):
 def make_submissions(first_names, conference, talk):
     submissions = []
     current_time = conference.start_date
-    for version, n_submission in enumerate(range(random.randrange(5)), start=1):
+    for n_submission in range(random.randrange(5)):
+        talk.n_submissions += 1
+        version = talk.n_submissions
         make_example_submission(talk, version)
         current_time = current_time + get_delta()
         submission = Submission(talk=talk, time=current_time, version=version, filename='my_example_file.pdf')

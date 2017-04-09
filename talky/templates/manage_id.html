@@ -33,52 +33,15 @@
       </nav>
 
       <div class="page-header">
-        <h2>{{ title }}{% if modify %} <small><a href="/manage/{{ talk_id }}/{{ manage_key }}/"><span class="label label-success">Modify</span>{% endif %}</a></small></h2>
+        <h2>{{ title }}</h2>
       </div>
 
-      <h1></h1>
-      <table class="table table-hover table-bordered searchable">
-        <tr>
-          <td><b>Conference</b></td>
-          <td><a href="{% if conference_url %}{{ conference_url }}{% else %}#{% endif %}">{{ conference_name }}</a> <small>({{ conference_start_date }})</small></td>
-        </tr>
+      <form method=post enctype=multipart/form-data>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <p><input type=file name=file>
+           <input type=submit value=Upload>
+      </form>
 
-        <tr>
-          <td><b>Speaker</b></td>
-          <td><a href="mailto:{{ speaker }}">{{ speaker }}</a> <small>({{ experiment }})</small></td>
-        </tr>
-
-        <!-- <tr>
-          <td><b>Interesting To</b></td>
-          <td>LHCb</td>
-        </tr> -->
-
-        <tr>
-          <td><b>Duration</b></td>
-          <td>{{ duration }} XX {{n_submissions}}</td>
-        </tr>
-
-        <tr>
-          <td><b>Submissions</b></td>
-          <td><p>
-            {% for submission_id, submission_version, time in submissions %}
-            {% if modify %} <a href="submission/{{ submission_id }}/delete/"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a> {% endif -%}
-            <a href="submission/v{{ submission_version }}"><span class="label label-{% if loop.last %}success{% else %}default{% endif %}">v{{ loop.index }} ({{ time }})</span></a>
-            {% endfor %}
-          </p></td>
-        </tr>
-
-        <tr>
-          <td><b>Abstract</b></td>
-          <td>
-            {% if abstract %}{% for line in abstract.splitlines() %}
-                {{line}}<br \>
-            {% endfor %}{% endif %}
-          </td>
-        </tr>
-      </table>
-
-      {% include 'comments.html' %}
     </div>
 
     <script src="/secure/admin/static/vendor/jquery.min.js?v=2.1.4" type="text/javascript"></script>
