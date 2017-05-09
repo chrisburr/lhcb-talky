@@ -6,7 +6,7 @@ from . import default_config
 
 __all__ = ['app', 'mail', 'csrf']
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='')
 app.config.from_object(default_config)
 mail = Mail(app)
 csrf = CSRFProtect(app)
