@@ -20,7 +20,7 @@ def create_interface(app, security):
     user = flask_admin.Admin(
         app,
         'Talky',
-        base_template='my_master.html',
+        base_template='base_template.html',
         template_mode='bootstrap3',
         url='/secure/user',
         endpoint='user',
@@ -34,7 +34,7 @@ def create_interface(app, security):
     admin = flask_admin.Admin(
         app,
         'Talky - Admin',
-        base_template='my_master.html',
+        base_template='base_template.html',
         template_mode='bootstrap3',
         url='/secure/admin',
         endpoint='admin'

@@ -66,19 +66,19 @@ def upload_submission(talk_id=None, upload_key=None):
         # Check if the post request has the file part
         if 'file' not in request.files:
             log.error(f'Request did not contain files')
-            flash('Invalid request')
+            flash('Invalid request', 'error')
             abort(400)
         file = request.files['file']
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == '':
             log.error(f'No file given for submission')
-            flash('No file specified')
+            flash('No file specified', 'error')
             return redirect(request.url)
 
         if not (file and allowed_file(file.filename)):
             log.error(f'Invalid file submission attempted, aborting')
-            flash('Invalid filename or extension (only pdf is permitted)')
+            flash('Invalid filename or extension (only pdf is permitted)', 'error')
             return redirect(request.url)
 
         # Prepare the upload folder
@@ -130,7 +130,7 @@ def view_talk(talk_id=None, view_key=None):
     ) for c in sorted(talk.comments, key=lambda c: c.time)])
 
     return render_template(
-        'view_id.html',
+        'view_talk.html',
         talk_id=talk_id,
         upload_key=talk.upload_key,
         title=talk.title,

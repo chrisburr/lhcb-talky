@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for
-from flask_mail import Mail
+from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
 
 from . import default_config
@@ -15,3 +15,8 @@ csrf = CSRFProtect(app)
 @app.route('/')
 def index():
     return redirect(url_for('security.login'))
+
+# msg = Message('Started application')
+# msg.recipients = ['chrisburr73@gmail.com']
+# msg.body = 'testing'
+# mail.send(msg)

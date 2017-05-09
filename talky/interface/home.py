@@ -1,7 +1,6 @@
 from math import ceil
 
 from flask_admin.base import expose
-from flask_admin.contrib import sqla
 from flask_security import current_user
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
@@ -21,7 +20,7 @@ class UserHomeView(views.DBTalkView, views.UserView):
     can_export = True
 
     # Templates
-    list_template = 'home/list.html'
+    list_template = 'talks_listing.html'
     edit_template = 'admin/model/edit.html'
     create_template = 'admin/model/create.html'
     details_template = 'admin/model/details.html'
