@@ -52,5 +52,5 @@ SECURITY_SEND_REGISTER_EMAIL = False
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # As I'm paranoid avoid leaking valid user accounts
-SECURITY_MSG_USER_DOES_NOT_EXIST = 'Invalid username/password combination'
+SECURITY_MSG_USER_DOES_NOT_EXIST = ('Invalid username/password combination', 'error')
 SECURITY_MSG_INVALID_PASSWORD = SECURITY_MSG_USER_DOES_NOT_EXIST
