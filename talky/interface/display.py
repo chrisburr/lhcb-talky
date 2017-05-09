@@ -2,8 +2,9 @@ from collections import namedtuple
 from datetime import datetime
 import os
 from os.path import join, isfile, isdir
+import logging as log
 
-from flask import render_template, abort, redirect, request, send_file, url_for
+from flask import render_template, abort, redirect, request, send_file, flash
 from flask_security import current_user
 from werkzeug.utils import secure_filename
 
@@ -28,15 +29,18 @@ def recurse_comments(comments):
     return comment_index[None][-1]
 
 
-def get_talk(talk_id, view_key=None, manage_key=None):
+def get_talk(talk_id, view_key=None, upload_key=None):
     talk = schema.Talk.query.get(talk_id)
-    if not (view_key or manage_key):
+    if not (view_key or upload_key):
         raise RuntimeError()
     if not talk:
+        log.warn(f'Failed to find Talk with id == {talk_id}')
         abort(404)
     if view_key and talk.view_key != view_key:
+        log.warn(f'Incorrect view_key ({view_key}) given for Talk {talk_id}')
         abort(404)
-    if manage_key and talk.manage_key != manage_key:
+    if upload_key and talk.upload_key != upload_key:
+        log.warn(f'Incorrect upload_key ({upload_key}) given for Talk {talk_id}')
         abort(404)
     return talk
 
@@ -53,24 +57,28 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ['pdf']
 
 
-@app.route('/manage/<talk_id>/<manage_key>/', methods=['GET', 'POST'])
-def manage_talk(talk_id=None, manage_key=None):
-    talk = get_talk(talk_id, manage_key=manage_key)
+@app.route('/upload/<talk_id>/<upload_key>/', methods=['GET', 'POST'])
+def upload_submission(talk_id=None, upload_key=None):
+    talk = get_talk(talk_id, upload_key=upload_key)
 
     if request.method == 'POST':
-        # check if the post request has the file part
+        log.info(f'{current_user} is uploading a talk for {talk_id}')
+        # Check if the post request has the file part
         if 'file' not in request.files:
-            raise NotImplementedError('No file part')
-            return redirect(request.url)
+            log.error(f'Request did not contain files')
+            flash('Invalid request')
+            abort(400)
         file = request.files['file']
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == '':
-            raise NotImplementedError('No selected file')
+            log.error(f'No file given for submission')
+            flash('No file specified')
             return redirect(request.url)
 
         if not (file and allowed_file(file.filename)):
-            raise NotImplementedError('Invalid file')
+            log.error(f'Invalid file submission attempted, aborting')
+            flash('Invalid filename or extension (only pdf is permitted)')
             return redirect(request.url)
 
         # Prepare the upload folder
@@ -78,7 +86,7 @@ def manage_talk(talk_id=None, manage_key=None):
         version = talk.n_submissions
         submission_dir = join(file_path, str(talk.id), str(version))
         if isdir(submission_dir):
-            print('WARNING: INTERNAL SERVER ERROR! - Recovering...')
+            log.warning('Submission directory already exists, recovering')
             while isdir(submission_dir):
                 talk.n_submissions += 1
                 version = talk.n_submissions
@@ -86,6 +94,8 @@ def manage_talk(talk_id=None, manage_key=None):
         os.makedirs(submission_dir)
 
         filename = secure_filename(file.filename)
+        log.info(f'Uploading submission v{version} for talk {talk_id} with '
+                 f'filename {filename} to {submission_dir}')
         file.save(join(submission_dir, filename))
 
         submission = schema.Submission(
@@ -94,15 +104,15 @@ def manage_talk(talk_id=None, manage_key=None):
         )
         schema.db.session.add(submission)
         schema.db.session.commit()
-        # flash(f'Uploaded v{XX} sucessfully')
+        log.info(f'Submission {submission.id} successfully uploaded')
         return redirect(f'/view/{talk.id}/{talk.view_key}/')
-
-    return render_template(
-        'manage_id.html',
-        talk_id=talk_id,
-        title=talk.title,
-        modify=user_can_edit(talk)
-    )
+    else:
+        return render_template(
+            'upload_submission.html',
+            talk_id=talk_id,
+            title=talk.title,
+            modify=user_can_edit(talk)
+        )
 
 
 @app.route('/view/<talk_id>/<view_key>/')
@@ -122,7 +132,7 @@ def view_talk(talk_id=None, view_key=None):
     return render_template(
         'view_id.html',
         talk_id=talk_id,
-        manage_key=talk.manage_key,
+        upload_key=talk.upload_key,
         title=talk.title,
         abstract=talk.abstract,
         duration=talk.duration,

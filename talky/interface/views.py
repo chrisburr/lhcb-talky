@@ -1,6 +1,5 @@
 from flask import url_for, redirect, request, abort
 from flask_security import current_user
-import flask_admin
 from flask_admin.contrib import sqla
 
 from .. import schema

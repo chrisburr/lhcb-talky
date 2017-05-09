@@ -7,6 +7,13 @@ from .. import schema
 from .views import make_view, UserView, AdminView
 from .views import DBCategoryView, DBContactView, DBConferenceView, DBTalkView
 from .home import UserHomeView
+from . import display
+
+
+__all__ = [
+    'create_interface',
+    'display'
+]
 
 
 def create_interface(app, security):

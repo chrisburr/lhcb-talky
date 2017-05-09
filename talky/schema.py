@@ -163,7 +163,7 @@ class Talk(db.Model):
     )
 
     view_key = db.Column(db.String(200), nullable=False, default=secrets.token_urlsafe)
-    manage_key = db.Column(db.String(200), nullable=False, default=secrets.token_urlsafe)
+    upload_key = db.Column(db.String(200), nullable=False, default=secrets.token_urlsafe)
 
     def __str__(self):
         return f'{self.title} - {self.conference.name}'
