@@ -34,13 +34,13 @@ def get_talk(talk_id, view_key=None, upload_key=None):
     if not (view_key or upload_key):
         raise RuntimeError()
     if not talk:
-        log.warn(f'Failed to find Talk with id == {talk_id}')
+        log.warning(f'Failed to find Talk with id == {talk_id}')
         abort(404)
     if view_key and talk.view_key != view_key:
-        log.warn(f'Incorrect view_key ({view_key}) given for Talk {talk_id}')
+        log.warning(f'Incorrect view_key ({view_key}) given for Talk {talk_id}')
         abort(404)
     if upload_key and talk.upload_key != upload_key:
-        log.warn(f'Incorrect upload_key ({upload_key}) given for Talk {talk_id}')
+        log.warning(f'Incorrect upload_key ({upload_key}) given for Talk {talk_id}')
         abort(404)
     return talk
 
