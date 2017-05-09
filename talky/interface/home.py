@@ -1,6 +1,6 @@
 from math import ceil
 
-from flask.ext.admin.base import expose
+from flask_admin.base import expose
 from flask_admin.contrib import sqla
 from flask_security import current_user
 from flask_admin.helpers import get_redirect_target
@@ -35,7 +35,7 @@ class UserHomeView(views.DBTalkView, views.UserView):
     details_modal = False
 
     # Customizations
-    column_list = ['conference_date', 'conference', 'title', 'experiment', 'duration', 'speaker']
+    column_list = ['conference_date', 'conference', 'title', 'experiment', 'interesting_to', 'duration', 'speaker']
     column_details_list = ['conference_date', 'conference', 'title', 'experiment', 'interesting_to', 'duration', 'speaker', 'abstract']
     column_details_exclude_list = None
     column_export_exclude_list = None

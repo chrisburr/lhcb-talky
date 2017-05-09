@@ -30,7 +30,9 @@ def recurse_comments(comments):
 
 def get_talk(talk_id, view_key=None, manage_key=None):
     talk = schema.Talk.query.get(talk_id)
-    if not talk and not (view_key or manage_key):
+    if not (view_key or manage_key):
+        raise RuntimeError()
+    if not talk:
         abort(404)
     if view_key and talk.view_key != view_key:
         abort(404)
@@ -93,6 +95,7 @@ def manage_talk(talk_id=None, manage_key=None):
         schema.db.session.add(submission)
         schema.db.session.commit()
         # flash(f'Uploaded v{XX} sucessfully')
+        return redirect(f'/view/{talk.id}/{talk.view_key}/')
 
     return render_template(
         'manage_id.html',
