@@ -156,7 +156,7 @@ def submit_comment(talk_id=None, view_key=None):
             if not any(parent_comment_id == c.id for c in talk.comments):
                 abort(410)
 
-    if talk.submissions:
+    if talk.submissions.all():
         submission = sorted(talk.submissions, key=lambda s: s.time)[-1]
     else:
         submission = None
@@ -237,7 +237,3 @@ def delete_submission(talk_id=None, view_key=None, submission_id=None):
     schema.db.session.commit()
 
     return redirect(f'/view/{talk_id}/{view_key}/')
-
-
-def create_display():
-    pass

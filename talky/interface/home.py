@@ -74,7 +74,7 @@ class UserHomeView(views.DBTalkView, views.UserView):
 
     # Export settings
     export_max_rows = 0
-    export_types = ['json', 'xlsx', 'yaml', 'csv']
+    export_types = ['xlsx', 'csv']
 
     # Pagination settings
     page_size = 20
