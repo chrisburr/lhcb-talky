@@ -182,14 +182,14 @@ class DBTalkView(object):
             form = super(AdminView, self).create_form()
         return form
 
-    def edit_form(self, obj):
-        try:
-            form = super(UserView, self).edit_form(obj)
-            # Filter any query based fields to limit them to the current experiment
-            getattr(form, 'interesting_to').query_factory = self._make_filter(schema.Experiment)
-        except TypeError:
-            form = super(AdminView, self).create_form()
-        return form
+    # def edit_form(self, obj):
+    #     try:
+    #         form = super(UserView, self).edit_form(obj)
+    #         # Filter any query based fields to limit them to the current experiment
+    #         getattr(form, 'interesting_to').query_factory = self._make_filter(schema.Experiment)
+    #     except TypeError:
+    #         form = super(AdminView, self).create_form()
+    #     return form
 
 
 def make_view(user_view, view=None, db=None):

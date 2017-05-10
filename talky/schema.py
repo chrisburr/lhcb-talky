@@ -1,15 +1,11 @@
 # [SublimeLinter flake8-max-line-length:120]
-import os
-from os.path import join
 import secrets
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.event import listens_for
 
 from .talky import app
-from .default_config import cleanup_files
 
 __all__ = [
     'db', 'Role', 'User', 'Experiment', 'Conference', 'Comment', 'Submission',
@@ -113,17 +109,6 @@ class Submission(db.Model):
 
     def __str__(self):
         return 'TODO'
-
-
-# Delete hooks for models, delete files if models are getting deleted
-@listens_for(Submission, 'after_delete')
-def delete_file(mapper, connection, target):
-    if target.filename and cleanup_files:
-        try:
-            os.remove(join(app.config['FILE_PATH'], str(target.talk.id), str(target.version), target.filename))
-        except OSError:
-            # Don't care if was not deleted because it does not exist
-            pass
 
 
 class Category(db.Model):

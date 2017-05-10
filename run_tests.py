@@ -15,13 +15,15 @@ class TalkyBaseTestCase(unittest.TestCase):
         # Set up a dummy database
         self.db_fd, talky.app.config['DATABASE_FILE'] = tempfile.mkstemp()
         talky.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + talky.app.config['DATABASE_FILE']
-        talky.app.config['TESTING'] = False
+        talky.app.config['TESTING'] = True
         # Disable CSRF tokens for unit tests
         talky.app.config['WTF_CSRF_ENABLED'] = False
         # Set up a dummy location for uploaded files
         talky.app.config['FILE_PATH'] = tempfile.mkdtemp()
         # Prepare the test client
         self.client = talky.app.test_client()
+        # Prevent sending email
+        talky.mail.send = lambda msg: print(f'Skipped sending {msg}')
         # Fill the dummy database
         with talky.app.app_context():
             from talky import create_database
@@ -462,7 +464,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '200 OK'
         assert b'First 1489 Last' in rv.data
         assert b'first.last@domain.org' in rv.data
-        assert self.format_coment(comment['comment']) in rv.data
+        assert self.format_coment(comment['comment']) in rv.data, comment['comment']
         # TODO Test top ness
 
     def test_invalid_top_comment(self):
@@ -481,7 +483,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '200 OK'
         assert b'First 1236 Last' not in rv.data
         assert b'first.last.1236@domain.org' not in rv.data
-        assert self.format_coment(comment['comment']) not in rv.data
+        assert self.format_coment(comment['comment']) not in rv.data, comment['comment']
 
         # Ensure incomplete comments can't be posted
         rv = self.client.post(
@@ -492,7 +494,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '400 BAD REQUEST'
         assert b'First 1236 Last' not in rv.data
         assert b'first.last.1236@domain.org' not in rv.data
-        assert self.format_coment(comment['comment']) not in rv.data
+        assert self.format_coment(comment['comment']) not in rv.data, comment['comment']
 
         _comment = comment.copy()
         del _comment['parent_comment_id']
@@ -504,7 +506,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '400 BAD REQUEST'
         assert b'First 1236 Last' not in rv.data
         assert b'first.last.1236@domain.org' not in rv.data
-        assert self.format_coment(_comment['comment']) not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data, _comment['comment']
 
         _comment = comment.copy()
         _comment['parent_comment_id'] = '99999'
@@ -516,7 +518,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '400 BAD REQUEST'
         assert b'First 1236 Last' not in rv.data
         assert b'first.last.1236@domain.org' not in rv.data
-        assert self.format_coment(_comment['comment']) not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data, _comment['comment']
 
         _comment = comment.copy()
         del _comment['name']
@@ -528,7 +530,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '400 BAD REQUEST'
         assert b'First 1236 Last' not in rv.data
         assert b'first.last.1236@domain.org' not in rv.data
-        assert self.format_coment(_comment['comment']) not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data, _comment['comment']
 
         _comment = comment.copy()
         del _comment['email']
@@ -540,7 +542,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '400 BAD REQUEST'
         assert b'First 1236 Last' not in rv.data
         assert b'first.last.1236@domain.org' not in rv.data
-        assert self.format_coment(_comment['comment']) not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data, _comment['comment']
 
         _comment = comment.copy()
         _comment['email'] = 'invalid.email.address'
@@ -552,7 +554,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '400 BAD REQUEST'
         assert b'First 1236 Last' not in rv.data
         assert b'invalid.email.address' not in rv.data
-        assert self.format_coment(_comment['comment']) not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data, _comment['comment']
 
         _comment = comment.copy()
         del _comment['comment']
@@ -564,7 +566,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         assert rv.status == '400 BAD REQUEST'
         assert b'First 1236 Last' not in rv.data
         assert b'first.last.1236@domain.org' not in rv.data
-        assert self.format_coment(comment['comment']) not in rv.data
+        assert self.format_coment(comment['comment']) not in rv.data, comment['comment']
 
     def test_valid_delete(self):
         talk = self.get_talk(experiment='LHCb', min_comments=1)
@@ -577,7 +579,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
             follow_redirects=True
         )
         assert rv.status == '200 OK'
-        assert self.format_coment(comment.comment) in rv.data
+        assert self.format_coment(comment.comment) in rv.data, comment.comment
 
         self.login('userlhcb', 'user')
         rv = self.client.get(
@@ -587,7 +589,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
         self.logout()
         assert rv.status == '200 OK'
         # Should redirect to the talk view page
-        assert self.format_coment(comment.comment) not in rv.data
+        assert self.format_coment(comment.comment) not in rv.data, comment.comment
 
     def test_invalid_delete(self):
         talk = self.get_talk(experiment='LHCb', min_comments=1)
@@ -600,7 +602,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
             follow_redirects=True
         )
         assert rv.status == '200 OK'
-        assert self.format_coment(comment.comment) in rv.data
+        assert self.format_coment(comment.comment) in rv.data, comment.comment
 
         rv = self.client.get(
             f'/view/{talk.id}/{talk.view_key}/comment/{comment.id}/delete/',
@@ -613,7 +615,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
             follow_redirects=True
         )
         assert rv.status == '200 OK'
-        assert self.format_coment(comment.comment) in rv.data
+        assert self.format_coment(comment.comment) in rv.data, comment.comment
 
     def test_invalid_delete_wrong_experiment(self):
         talk = self.get_talk(experiment='Belle', min_comments=1)
@@ -626,7 +628,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
             follow_redirects=True
         )
         assert rv.status == '200 OK'
-        assert self.format_coment(comment.comment) in rv.data
+        assert self.format_coment(comment.comment) in rv.data, comment.comment
 
         self.login('userlhcb', 'user')
         rv = self.client.get(
@@ -641,7 +643,7 @@ class TalkyCommentsTestCase(TalkyBaseTestCase):
             follow_redirects=True
         )
         assert rv.status == '200 OK'
-        assert self.format_coment(comment.comment) in rv.data
+        assert self.format_coment(comment.comment) in rv.data, comment.comment
 
     # TODO Add tests for child comments
 

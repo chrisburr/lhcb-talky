@@ -1,12 +1,13 @@
 import colorlog
 
-from .talky import app
+from .talky import app, mail
 from .schema import db
 from . import login
 from . import interface
+from . import database_events
 
 __all__ = [
-    'app', 'db', 'login'
+    'app', 'mail', 'db', 'login', 'database_events'
 ]
 
 # Setup colourful logging
