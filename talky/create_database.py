@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import random
 import os
 from os.path import join, isdir
+import secrets
 
 from matplotlib import pyplot as plt
 from flask_security.utils import encrypt_password
@@ -14,7 +15,8 @@ from .schema import db, Role, Experiment, Conference, Comment, Submission, Categ
 
 
 __all__ = [
-    'build_sample_db'
+    'build_sample_db',
+    'build_production_db',
 ]
 
 
@@ -73,6 +75,33 @@ def make_comment(first_names, current_time, talk, submissions, parent=None, chil
     if random.random() > 1-child_prob:
         for n_comment in range(random.randrange(1, 4)):
             make_comment(first_names, current_time, talk, submissions, comment.id, child_prob*0.5)
+
+
+def build_production_db():
+    db.drop_all()
+    db.create_all()
+
+    with app.app_context():
+        lhcb = Experiment(name='LHCb')
+        db.session.add(lhcb)
+        db.session.commit()
+
+        user_role = Role(name='user')
+        super_user_role = Role(name='superuser')
+        db.session.add(user_role)
+        db.session.add(super_user_role)
+        db.session.commit()
+
+        admin_password = secrets.token_urlsafe()
+        print(f'Admin password is "{admin_password}"')
+        user_datastore.create_user(
+            name='Admin',
+            email='christopher.burr@cern.ch',
+            password=encrypt_password(admin_password),
+            roles=[user_role, super_user_role],
+            experiment=lhcb
+        )
+        db.session.commit()
 
 
 def build_sample_db(fast=False):

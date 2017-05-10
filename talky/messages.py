@@ -60,7 +60,7 @@ def send_new_talk_available(submission):
     msg.reply_to = _validate_emails(['chrisburr73+reply_to@gmail.com'])[0]
     # Send notifications to the members of this and flagged experiments
     recipients = []
-    for user in schema.Talk.query.all():
+    for user in schema.User.query.all():
         if user.experiment == talk.experiment:
             recipients.append(user.email)
         elif user.experiment in talk.interesting_to:
