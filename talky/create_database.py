@@ -60,7 +60,7 @@ def make_comment(first_names, current_time, talk, submissions, parent=None, chil
     s = [s for s in submissions if s.time < current_time]
     comment = Comment(
         name=' '.join(name),
-        email=f'{name[0]}.{name[1]}@cern.ch',
+        email=f'chrisburr73+{name[0]}.{name[1]}@gmail.com',
         comment=lipsum.generate_sentences(random.randrange(1, 5)),
         time=current_time,
         talk=talk,
@@ -139,7 +139,7 @@ def build_sample_db(fast=False):
         contacts = []
         for i in range(9 if fast else len(first_names)):
             tmp_experiment = [lhcb, belle, belle_2][i % 3]
-            tmp_email = f'{first_names[i].lower()}@{tmp_experiment.name}.com'
+            tmp_email = f'chrisburr73+{first_names[i].lower()}.{tmp_experiment.name}@gmail.com'
             contacts.append(Contact(email=tmp_email, experiment=tmp_experiment))
             db.session.add(contacts[-1])
         db.session.commit()
@@ -163,24 +163,31 @@ def build_sample_db(fast=False):
 
         for conference in conferences:
             charm_prod = Talk(
-                title='Charm hadron production cross-sections at √s = 13 TeV using 300pb⁻¹', duration=f'{random.randrange(10, 90)}" (+ questions)', speaker=f'{".".join(random.sample(first_names, 2))}@cern.ch',
-                experiment=lhcb, interesting_to=[belle, belle_2], conference=conference, abstract=lipsum.generate_sentences(10)
+                title='Charm hadron production cross-sections at √s = 13 TeV using 300pb⁻¹',
+                duration=f'{random.randrange(10, 90)}" (+ questions)',
+                speaker=f'chrisburr73+{".".join(random.sample(first_names, 2))}@gmail.com',
+                experiment=lhcb, interesting_to=[belle, belle_2], conference=conference,
+                abstract=lipsum.generate_sentences(10)
             )
             db.session.add(charm_prod)
             db.session.commit()
             make_submissions(first_names, conference, charm_prod)
 
             talk = Talk(
-                title=lipsum.generate_words(10), duration=f'{random.randrange(10, 90)}"', speaker=f'{".".join(random.sample(first_names, 2))}@cern.ch',
-                experiment=belle, interesting_to=[lhcb], conference=conference, abstract=lipsum.generate_paragraphs(2)
+                title=lipsum.generate_words(10), duration=f'{random.randrange(10, 90)}"',
+                speaker=f'chrisburr73+{".".join(random.sample(first_names, 2))}@gmail.com',
+                experiment=belle, interesting_to=[lhcb], conference=conference,
+                abstract=lipsum.generate_paragraphs(2)
             )
             db.session.add(talk)
             db.session.commit()
             make_submissions(first_names, conference, talk)
 
             talk = Talk(
-                title=lipsum.generate_words(10), duration=f'{random.randrange(10, 90)}"', speaker=f'{".".join(random.sample(first_names, 2))}@cern.ch',
-                experiment=belle_2, interesting_to=[belle], conference=conference, abstract=lipsum.generate_paragraphs(2)
+                title=lipsum.generate_words(10), duration=f'{random.randrange(10, 90)}"',
+                speaker=f'chrisburr73+{".".join(random.sample(first_names, 2))}@gmail.com',
+                experiment=belle_2, interesting_to=[belle], conference=conference,
+                abstract=lipsum.generate_paragraphs(2)
             )
             db.session.add(talk)
             db.session.commit()
