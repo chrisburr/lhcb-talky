@@ -41,16 +41,21 @@ class TalkyBaseTestCase(unittest.TestCase):
     def logout(self):
         return self.client.get('/secure/logout', follow_redirects=True)
 
-    def get_talk(self, *, experiment=None, min_submissions=0):
+    def get_talk(self, *, experiment=None, min_submissions=0, min_comments=0):
         """Get a talk matching the criteria passed as arguments."""
+        # TODO This could result in flaky tests, we should instead guarantee
+        # the database is valid for all tests (seeding PRNG?)
         with talky.app.app_context():
             for talk in talky.schema.Talk.query.all():
                 if experiment is not None and talk.experiment.name != experiment:
                     continue
                 if len(talk.submissions.all()) < min_submissions:
                     continue
+                if len(talk.comments) < min_comments:
+                    continue
                 return talk
-        raise ValueError('Invalid parameters passed', experiment, min_submissions)
+        raise ValueError('Invalid parameters passed', experiment,
+                         min_submissions, min_comments)
 
 
 class TalkyAuthTestCase(TalkyBaseTestCase):
@@ -408,7 +413,237 @@ class TalkyCategoryTestCase(TalkyBaseTestCase):
 
 
 class TalkyCommentsTestCase(TalkyBaseTestCase):
-    pass
+    @classmethod
+    def format_coment(cls, comment):
+        formatted_comment = ''
+        for line in comment.splitlines():
+            formatted_comment += f'{line }<br \>'
+        return formatted_comment.encode('utf-8')
+
+    def test_get(self):
+        talk = self.get_talk()
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            follow_redirects=True
+        )
+        assert rv.status == '404 NOT FOUND'
+
+    def test_top_comment(self):
+        talk = self.get_talk()
+        comment = dict(
+                parent_comment_id='None',
+                name='First 1489 Last',
+                email='first.last@domain.org',
+                comment='Example\n\n comment\n 487'
+        )
+
+        # Ensure comments can't be posted without the view_key
+        rv = self.client.post(
+            f'/view/{talk.id}/bad_view_key/comment/',
+            data=comment,
+            follow_redirects=True
+        )
+        assert rv.status == '404 NOT FOUND', rv.status
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert b'First 1489 Last' not in rv.data
+        assert b'first.last@domain.org' not in rv.data
+        assert b'Example comment 487' not in rv.data
+
+        # Ensure comments can be posted
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data=comment,
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert b'First 1489 Last' in rv.data
+        assert b'first.last@domain.org' in rv.data
+        assert self.format_coment(comment['comment']) in rv.data
+        # TODO Test top ness
+
+    def test_invalid_top_comment(self):
+        talk = self.get_talk()
+        comment = dict(
+                parent_comment_id='None',
+                name='First 1236 Last',
+                email='first.last.1236@domain.org',
+                comment='Example comment 853'
+        )
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert b'First 1236 Last' not in rv.data
+        assert b'first.last.1236@domain.org' not in rv.data
+        assert self.format_coment(comment['comment']) not in rv.data
+
+        # Ensure incomplete comments can't be posted
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data={},
+            follow_redirects=True
+        )
+        assert rv.status == '400 BAD REQUEST'
+        assert b'First 1236 Last' not in rv.data
+        assert b'first.last.1236@domain.org' not in rv.data
+        assert self.format_coment(comment['comment']) not in rv.data
+
+        _comment = comment.copy()
+        del _comment['parent_comment_id']
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data=_comment,
+            follow_redirects=True
+        )
+        assert rv.status == '400 BAD REQUEST'
+        assert b'First 1236 Last' not in rv.data
+        assert b'first.last.1236@domain.org' not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data
+
+        _comment = comment.copy()
+        _comment['parent_comment_id'] = '99999'
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data=_comment,
+            follow_redirects=True
+        )
+        assert rv.status == '400 BAD REQUEST'
+        assert b'First 1236 Last' not in rv.data
+        assert b'first.last.1236@domain.org' not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data
+
+        _comment = comment.copy()
+        del _comment['name']
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data=_comment,
+            follow_redirects=True
+        )
+        assert rv.status == '400 BAD REQUEST'
+        assert b'First 1236 Last' not in rv.data
+        assert b'first.last.1236@domain.org' not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data
+
+        _comment = comment.copy()
+        del _comment['email']
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data=_comment,
+            follow_redirects=True
+        )
+        assert rv.status == '400 BAD REQUEST'
+        assert b'First 1236 Last' not in rv.data
+        assert b'first.last.1236@domain.org' not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data
+
+        _comment = comment.copy()
+        _comment['email'] = 'invalid.email.address'
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data=_comment,
+            follow_redirects=True
+        )
+        assert rv.status == '400 BAD REQUEST'
+        assert b'First 1236 Last' not in rv.data
+        assert b'invalid.email.address' not in rv.data
+        assert self.format_coment(_comment['comment']) not in rv.data
+
+        _comment = comment.copy()
+        del _comment['comment']
+        rv = self.client.post(
+            f'/view/{talk.id}/{talk.view_key}/comment/',
+            data=_comment,
+            follow_redirects=True
+        )
+        assert rv.status == '400 BAD REQUEST'
+        assert b'First 1236 Last' not in rv.data
+        assert b'first.last.1236@domain.org' not in rv.data
+        assert self.format_coment(comment['comment']) not in rv.data
+
+    def test_valid_delete(self):
+        talk = self.get_talk(experiment='LHCb', min_comments=1)
+
+        with talky.app.app_context():
+            comment = talky.schema.Talk.query.get(talk.id).comments[0]
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert self.format_coment(comment.comment) in rv.data
+
+        self.login('userlhcb', 'user')
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/comment/{comment.id}/delete/',
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        # Should redirect to the talk view page
+        assert self.format_coment(comment.comment) not in rv.data
+
+    def test_invalid_delete(self):
+        talk = self.get_talk(experiment='LHCb', min_comments=1)
+
+        with talky.app.app_context():
+            comment = talky.schema.Talk.query.get(talk.id).comments[0]
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert self.format_coment(comment.comment) in rv.data
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/comment/{comment.id}/delete/',
+            follow_redirects=True
+        )
+        assert rv.status == '404 NOT FOUND'
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert self.format_coment(comment.comment) in rv.data
+
+    def test_invalid_delete_wrong_experiment(self):
+        talk = self.get_talk(experiment='Belle', min_comments=1)
+
+        with talky.app.app_context():
+            comment = talky.schema.Talk.query.get(talk.id).comments[0]
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert self.format_coment(comment.comment) in rv.data
+
+        self.login('userlhcb', 'user')
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/comment/{comment.id}/delete/',
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '404 NOT FOUND'
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+        assert self.format_coment(comment.comment) in rv.data
+
+    # TODO Add tests for child comments
 
 
 if __name__ == '__main__':

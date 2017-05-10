@@ -154,16 +154,19 @@ def submit_comment(talk_id=None, view_key=None):
     if not all([request.form['name'].strip(), request.form['email'].strip(), request.form['comment'].strip()]):
         abort(400)
 
+    if '@' not in request.form['email']:
+        abort(400)
+
     if request.form['parent_comment_id'] == 'None':
         parent_comment_id = None
     else:
         try:
             parent_comment_id = int(request.form['parent_comment_id'])
         except Exception:
-            abort(410)
+            abort(400)
         else:
             if not any(parent_comment_id == c.id for c in talk.comments):
-                abort(410)
+                abort(400)
 
     if talk.submissions.all():
         submission = sorted(talk.submissions, key=lambda s: s.time)[-1]
