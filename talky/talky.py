@@ -9,8 +9,6 @@ __all__ = ['app', 'mail', 'csrf']
 app = Flask(__name__, static_folder='static', static_url_path='')
 app.config.from_object(default_config)
 mail = Mail(app)
-# Prevent sending email
-mail.send = lambda msg: print(f'Skipped sending {msg}')
 csrf = CSRFProtect(app)
 
 

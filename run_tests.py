@@ -45,8 +45,6 @@ class TalkyBaseTestCase(unittest.TestCase):
 
     def get_talk(self, *, experiment=None, min_submissions=0, min_comments=0):
         """Get a talk matching the criteria passed as arguments."""
-        # TODO This could result in flaky tests, we should instead guarantee
-        # the database is valid for all tests (seeding PRNG?)
         with talky.app.app_context():
             for talk in talky.schema.Talk.query.all():
                 if experiment is not None and talk.experiment.name != experiment:

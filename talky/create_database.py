@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from flask_security.utils import encrypt_password
 import lipsum
 
-from .talky import app
+from .talky import app, mail
 from .login import user_datastore
 from .schema import db, Role, Experiment, Conference, Comment, Submission, Category, Talk, Contact
 
@@ -77,6 +77,11 @@ def make_comment(first_names, current_time, talk, submissions, parent=None, chil
 
 def build_sample_db(fast=False):
     """Populate a db with some example entries."""
+    # Set a seed to avoid flakiness
+    random.seed(42)
+    # Prevent sending email
+    _send = mail.send
+    mail.send = lambda msg: None
 
     db.drop_all()
     db.create_all()
@@ -146,7 +151,7 @@ def build_sample_db(fast=False):
         db.session.commit()
 
         conferences = []
-        for year in range(2019 if fast else 2000, 2020):
+        for year in range(2018 if fast else 2000, 2020):
             conf_time = datetime.now() - timedelta(days=random.randrange(50, 500))
             llwi = Conference(name='LLWI '+str(year), venue='Canada', start_date=conf_time)
             db.session.add(llwi)
@@ -182,3 +187,6 @@ def build_sample_db(fast=False):
             make_submissions(first_names, conference, talk)
 
         db.session.commit()
+
+    # Restore mail sending functionality
+    mail.send = _send

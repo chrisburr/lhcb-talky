@@ -238,7 +238,7 @@ def view_submission(talk_id=None, view_key=None, version=None):
 def delete_submission(talk_id=None, view_key=None, submission_id=None):
     talk = get_talk(talk_id, view_key=view_key)
     if not user_can_edit(talk):
-        log.warn(f'Blocked attempt to delete submission {submission_id} for talk {talk_id}')
+        log.warning(f'Blocked attempt to delete submission {submission_id} for talk {talk_id}')
         abort(404)
 
     try:
