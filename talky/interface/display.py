@@ -213,17 +213,21 @@ def view_submission(talk_id=None, view_key=None, version=None):
     try:
         version = int(version)
     except Exception:
+        log.warning(f'Error parsing version as integer')
         abort(410)
 
     submission = talk.submissions.filter(schema.Submission.version == version).first()
     if not submission:
+        log.warning(f'Failed to find submission submission v{version} in talk {talk_id}')
         abort(404)
 
     submission_fn = join(app.config['FILE_PATH'], str(talk.id), str(submission.version), submission.filename)
 
     if isfile(submission_fn):
+        log.info(f'Sending {submission_fn} for submission v{version} in talk {talk_id}')
         return send_file(submission_fn)
     else:
+        log.warning(f'Failed to find file submission v{version} for talk {talk_id}')
         abort(410)
 
 
@@ -231,17 +235,21 @@ def view_submission(talk_id=None, view_key=None, version=None):
 def delete_submission(talk_id=None, view_key=None, submission_id=None):
     talk = get_talk(talk_id, view_key=view_key)
     if not user_can_edit(talk):
+        log.warn(f'Blocked attempt to delete submission {submission_id} for talk {talk_id}')
         abort(404)
 
     try:
         submission_id = int(submission_id)
     except Exception:
+        log.warning(f'Error parsing submission_id as integer')
         abort(410)
 
     submission = schema.Submission.query.get(submission_id)
     if not submission or submission.talk != talk:
+        log.warning(f'Invalid submission id ({submission_id}) passed for talk {talk_id}')
         abort(404)
 
+    log.info(f'Removing submission {submission_id} for talk {talk_id}')
     schema.db.session.delete(submission)
     schema.db.session.commit()
 

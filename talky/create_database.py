@@ -132,7 +132,7 @@ def build_sample_db(fast=False):
         ]
 
         contacts = []
-        for i in range(6 if fast else len(first_names)):
+        for i in range(9 if fast else len(first_names)):
             tmp_experiment = [lhcb, belle, belle_2][i % 3]
             tmp_email = f'{first_names[i].lower()}@{tmp_experiment.name}.com'
             contacts.append(Contact(email=tmp_email, experiment=tmp_experiment))

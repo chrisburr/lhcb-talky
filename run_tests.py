@@ -5,6 +5,8 @@ import shutil
 import unittest
 from io import BytesIO
 
+from werkzeug.datastructures import MultiDict
+
 import talky
 
 
@@ -39,14 +41,16 @@ class TalkyBaseTestCase(unittest.TestCase):
     def logout(self):
         return self.client.get('/secure/logout', follow_redirects=True)
 
-    def get_talk(self, *, experiment=None):
+    def get_talk(self, *, experiment=None, min_submissions=0):
         """Get a talk matching the criteria passed as arguments."""
         with talky.app.app_context():
             for talk in talky.schema.Talk.query.all():
                 if experiment is not None and talk.experiment.name != experiment:
                     continue
+                if len(talk.submissions.all()) < min_submissions:
+                    continue
                 return talk
-        raise ValueError('Invalid parameters passed', experiment)
+        raise ValueError('Invalid parameters passed', experiment, min_submissions)
 
 
 class TalkyAuthTestCase(TalkyBaseTestCase):
@@ -141,11 +145,12 @@ class TalkySubmissionTestCase(TalkyBaseTestCase):
                 s.id: (s.filename, s.version)
                 for s in talky.schema.Talk.query.get(talk.id).submissions.all()
             }
-        rv = self.client.post(
-            f'/upload/{talk.id}/{talk.upload_key}/',
-            data=dict(file=(BytesIO(b' '*1024*1024*10), 'large_file.pdf')),
-            follow_redirects=True
-        )
+        with BytesIO(b' '*1024*1024*10) as f:
+            rv = self.client.post(
+                f'/upload/{talk.id}/{talk.upload_key}/',
+                data=dict(file=(f, 'large_file.pdf')),
+                follow_redirects=True
+            )
         assert rv.status == '200 OK'
         with talky.app.app_context():
             after = {
@@ -172,42 +177,124 @@ class TalkySubmissionTestCase(TalkyBaseTestCase):
         )
         assert rv.status == '400 BAD REQUEST'
 
-        rv = self.client.post(
-            f'/upload/{talk.id}/{talk.upload_key}/',
-            data=dict(file=(BytesIO(b'Example contents'), '')),
-            follow_redirects=True
-        )
+        with BytesIO(b'Example contents') as f:
+            rv = self.client.post(
+                f'/upload/{talk.id}/{talk.upload_key}/',
+                data=dict(file=(f, '')),
+                follow_redirects=True
+            )
         assert rv.status == '200 OK'
         assert b'No file specified' in rv.data, rv.data
 
     def test_upload_bad_extension(self):
         talk = self.get_talk()
 
-        rv = self.client.post(
-            f'/upload/{talk.id}/{talk.upload_key}/',
-            data=dict(file=(BytesIO(b'Example contents'), 'bad_file')),
-            follow_redirects=True
-        )
+        with BytesIO(b'Example contents') as f:
+            rv = self.client.post(
+                f'/upload/{talk.id}/{talk.upload_key}/',
+                data=dict(file=(f, 'bad_file')),
+                follow_redirects=True
+            )
         assert rv.status == '200 OK'
         assert b'Invalid filename or extension' in rv.data
 
-        rv = self.client.post(
-            f'/upload/{talk.id}/{talk.upload_key}/',
-            data=dict(file=(BytesIO(b'Example contents'), 'bad_file.zip')),
-            follow_redirects=True
-        )
+        with BytesIO(b'Example contents') as f:
+            rv = self.client.post(
+                f'/upload/{talk.id}/{talk.upload_key}/',
+                data=dict(file=(f, 'bad_file.zip')),
+                follow_redirects=True
+            )
         assert rv.status == '200 OK'
         assert b'Invalid filename or extension' in rv.data
 
     def test_upload_large_file(self):
         talk = self.get_talk()
 
-        rv = self.client.post(
-            f'/upload/{talk.id}/{talk.upload_key}/',
-            data=dict(file=(BytesIO(b' '*1024*1024*50), 'large_file.pdf')),
+        with BytesIO(b' '*1024*1024*50) as f:
+            rv = self.client.post(
+                f'/upload/{talk.id}/{talk.upload_key}/',
+                data=dict(file=(f, 'large_file.pdf')),
+                follow_redirects=True
+            )
+        assert rv.status == '413 REQUEST ENTITY TOO LARGE'
+
+    def test_valid_delete(self):
+        talk = self.get_talk(experiment='LHCb', min_submissions=1)
+
+        with talky.app.app_context():
+            submission = talky.schema.Talk.query.get(talk.id).submissions.all()[0]
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/v{submission.version}/',
             follow_redirects=True
         )
-        assert rv.status == '413 REQUEST ENTITY TOO LARGE'
+        assert rv.status == '200 OK'
+
+        self.login('userlhcb', 'user')
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/{submission.id}/delete/',
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        # Should redirect to the talk view page
+        assert talk.title.encode('utf-8') in rv.data
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/v{submission.version}/',
+            follow_redirects=True
+        )
+        assert rv.status == '404 NOT FOUND'
+
+    def test_invalid_delete(self):
+        talk = self.get_talk(experiment='LHCb', min_submissions=1)
+
+        with talky.app.app_context():
+            submission = talky.schema.Talk.query.get(talk.id).submissions.all()[0]
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/v{submission.version}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/{submission.id}/delete/',
+            follow_redirects=True
+        )
+        assert rv.status == '404 NOT FOUND'
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/v{submission.version}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+
+    def test_invalid_delete_wrong_experiment(self):
+        talk = self.get_talk(experiment='Belle', min_submissions=1)
+
+        with talky.app.app_context():
+            submission = talky.schema.Talk.query.get(talk.id).submissions.all()[0]
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/v{submission.version}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
+
+        self.login('userlhcb', 'user')
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/{submission.id}/delete/',
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '404 NOT FOUND'
+
+        rv = self.client.get(
+            f'/view/{talk.id}/{talk.view_key}/submission/v{submission.version}/',
+            follow_redirects=True
+        )
+        assert rv.status == '200 OK'
 
 
 class TalkyConferenceTestCase(TalkyBaseTestCase):
@@ -278,6 +365,41 @@ class TalkyContactTestCase(TalkyBaseTestCase):
         rv = self.client.post(
             '/secure/user/contact/delete/',
             data=dict(id=1, url='/secure/user/contact/'),
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'<input id="id" name="id" type="hidden" value="1">' not in rv.data
+
+
+class TalkyCategoryTestCase(TalkyBaseTestCase):
+    def test_create(self):
+        self.login('userlhcb', 'user')
+        rv = self.client.post(
+            '/secure/user/category/new/?url=%2Fsecure%2Fuser%2Fcategory%2F',
+            data=MultiDict([('name', 'Semileptonic'), ('contacts', '4'), ('contacts', '7')]),
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'Save and Continue Editing' not in rv.data
+        assert b'Semileptonic' in rv.data
+
+    def test_delete(self):
+        # Ensure the category with id == 1 exists
+        self.login('userlhcb', 'user')
+        rv = self.client.get(
+            '/secure/user/category/',
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'<input id="id" name="id" type="hidden" value="1">' in rv.data
+        # Remove the category with id == 1
+        self.login('userlhcb', 'user')
+        rv = self.client.post(
+            '/secure/user/category/delete/',
+            data=dict(id=1, url='/secure/user/category/'),
             follow_redirects=True
         )
         self.logout()
