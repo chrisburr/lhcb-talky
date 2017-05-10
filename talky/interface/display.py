@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 
 from ..talky import app
 from .. import schema
-from ..default_config import file_path
 
 Comment = namedtuple(
     'Comment',
@@ -84,13 +83,13 @@ def upload_submission(talk_id=None, upload_key=None):
         # Prepare the upload folder
         talk.n_submissions += 1
         version = talk.n_submissions
-        submission_dir = join(file_path, str(talk.id), str(version))
+        submission_dir = join(app.config['FILE_PATH'], str(talk.id), str(version))
         if isdir(submission_dir):
             log.warning('Submission directory already exists, recovering')
             while isdir(submission_dir):
                 talk.n_submissions += 1
                 version = talk.n_submissions
-                submission_dir = join(file_path, str(talk.id), str(version))
+                submission_dir = join(app.config['FILE_PATH'], str(talk.id), str(version))
         os.makedirs(submission_dir)
 
         filename = secure_filename(file.filename)
@@ -220,7 +219,7 @@ def view_submission(talk_id=None, view_key=None, version=None):
     if not submission:
         abort(404)
 
-    submission_fn = join(file_path, str(talk.id), str(submission.version), submission.filename)
+    submission_fn = join(app.config['FILE_PATH'], str(talk.id), str(submission.version), submission.filename)
 
     if isfile(submission_fn):
         return send_file(submission_fn)

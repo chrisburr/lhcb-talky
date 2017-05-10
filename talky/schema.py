@@ -9,7 +9,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.event import listens_for
 
 from .talky import app
-from .default_config import file_path, cleanup_files
+from .default_config import cleanup_files
 
 __all__ = [
     'db', 'Role', 'User', 'Experiment', 'Conference', 'Comment', 'Submission',
@@ -120,7 +120,7 @@ class Submission(db.Model):
 def delete_file(mapper, connection, target):
     if target.filename and cleanup_files:
         try:
-            os.remove(join(file_path, str(target.talk.id), str(target.version), target.filename))
+            os.remove(join(app.config['FILE_PATH'], str(target.talk.id), str(target.version), target.filename))
         except OSError:
             # Don't care if was not deleted because it does not exist
             pass

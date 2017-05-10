@@ -9,7 +9,6 @@ from flask_security.utils import encrypt_password
 import lipsum
 
 from .talky import app
-from .default_config import file_path
 from .login import user_datastore
 from .schema import db, Role, Experiment, Conference, Comment, Submission, Category, Talk, Contact
 
@@ -31,7 +30,7 @@ def get_delta(days=2):
 def make_example_submission(talk, version):
     plt.title(talk.title)
     plt.text(0.1, 0.5, talk.experiment.name)
-    submission_dir = join(file_path, str(talk.id), str(version))
+    submission_dir = join(app.config['FILE_PATH'], str(talk.id), str(version))
     assert not isdir(submission_dir)
     os.makedirs(submission_dir)
     plt.savefig(join(submission_dir, 'my_example_file.pdf'))

@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import tempfile
+import os
+import shutil
 import unittest
 from io import BytesIO
 
@@ -8,27 +11,24 @@ import talky
 class TalkyBaseTestCase(unittest.TestCase):
     def setUp(self):
         # Set up a dummy database
-        # self.db_fd, talky.app.config['DATABASE'] = tempfile.mkstemp()
-        # talky.app.config['TESTING'] = False
+        self.db_fd, talky.app.config['DATABASE_FILE'] = tempfile.mkstemp()
+        talky.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + talky.app.config['DATABASE_FILE']
+        talky.app.config['TESTING'] = False
         # Disable CSRF tokens for unit tests
         talky.app.config['WTF_CSRF_ENABLED'] = False
         # Set up a dummy location for uploaded files
-        # talky.app.config['file_path'] = tempfile.mkdtemp()
-        # talky.default_config.file_path = talky.app.config['file_path']
+        talky.app.config['FILE_PATH'] = tempfile.mkdtemp()
         # Prepare the test client
         self.client = talky.app.test_client()
         # Fill the dummy database
-        # with talky.app.app_context():
-        #     print('Creating database')
-        #     from talky import create_database
-        #     create_database.build_sample_db(fast=True)
-        #     print('Database created')
+        with talky.app.app_context():
+            from talky import create_database
+            create_database.build_sample_db(fast=True)
 
     def tearDown(self):
-        pass
-        # os.close(self.db_fd)
-        # os.unlink(talky.app.config['DATABASE'])
-        # shutil.rmtree(talky.app.config['file_path'])
+        os.close(self.db_fd)
+        os.unlink(talky.app.config['DATABASE_FILE'])
+        shutil.rmtree(talky.app.config['FILE_PATH'])
 
     def login(self, username, password):
         return self.client.post('/secure/login/', data=dict(
@@ -156,7 +156,7 @@ class TalkySubmissionTestCase(TalkyBaseTestCase):
         new_submissions = set(after.items()) - set(before.items())
         assert len(new_submissions) == 1
         submission_id, (fn, version) = new_submissions.pop()
-        fn = f'{talky.default_config.file_path}/{talk.id}/{version}/{fn}'
+        fn = f'{talky.app.config["FILE_PATH"]}/{talk.id}/{version}/{fn}'
         with open(fn, 'rt') as f:
             file_contents = f.read()
         assert len(file_contents) == 1024*1024*10
@@ -208,6 +208,81 @@ class TalkySubmissionTestCase(TalkyBaseTestCase):
             follow_redirects=True
         )
         assert rv.status == '413 REQUEST ENTITY TOO LARGE'
+
+
+class TalkyConferenceTestCase(TalkyBaseTestCase):
+    def test_create_with_url(self):
+        self.login('userlhcb', 'user')
+        rv = self.client.post(
+            f'/secure/user/conference/new/?url=%2Fsecure%2Fuser%2Fconference%2F',
+            data=dict(
+                name='Example name WABW',
+                venue='Example venue WABW',
+                start_date='2000-05-03 01:35:00',
+                url='https://home.cern/'
+            ),
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'Save and Continue Editing' not in rv.data
+        assert b'Example name WABW' in rv.data
+        assert b'Example venue WABW' in rv.data
+        assert b'2000-05-03' in rv.data
+        assert b'https://home.cern/' in rv.data
+
+    def test_create_without_url(self):
+        self.login('userlhcb', 'user')
+        rv = self.client.post(
+            f'/secure/user/conference/new/?url=%2Fsecure%2Fuser%2Fconference%2F',
+            data=dict(
+                name='Example name XABX',
+                venue='Example venue XABX',
+                start_date='2021-05-03 01:35:00'
+            ),
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'Save and Continue Editing' not in rv.data
+        assert b'Example name XABX' in rv.data
+        assert b'Example venue XABX' in rv.data
+        assert b'2021-05-03' in rv.data
+
+
+class TalkyContactTestCase(TalkyBaseTestCase):
+    def test_create(self):
+        self.login('userlhcb', 'user')
+        rv = self.client.post(
+            '/secure/user/contact/new/?url=%2Fsecure%2Fuser%2Fcontact%2F',
+            data=dict(email='example.email.vssd@cern.ch'),
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'Save and Continue Editing' not in rv.data
+        assert b'example.email.vssd@cern.ch' in rv.data
+
+    def test_delete(self):
+        # Ensure the contact with id == 1 exists
+        self.login('userlhcb', 'user')
+        rv = self.client.get(
+            '/secure/user/contact/',
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'<input id="id" name="id" type="hidden" value="1">' in rv.data
+        # Remove the contact with id == 1
+        self.login('userlhcb', 'user')
+        rv = self.client.post(
+            '/secure/user/contact/delete/',
+            data=dict(id=1, url='/secure/user/contact/'),
+            follow_redirects=True
+        )
+        self.logout()
+        assert rv.status == '200 OK'
+        assert b'<input id="id" name="id" type="hidden" value="1">' not in rv.data
 
 
 class TalkyCommentsTestCase(TalkyBaseTestCase):
