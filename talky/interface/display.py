@@ -131,6 +131,7 @@ def view_talk(talk_id=None, view_key=None):
     return render_template(
         'view_talk.html',
         talk_id=talk_id,
+        view_key=talk.view_key,
         upload_key=talk.upload_key,
         title=talk.title,
         abstract=talk.abstract,
@@ -270,4 +271,4 @@ def delete_talk(talk_id=None, view_key=None):
     schema.db.session.delete(talk)
     schema.db.session.commit()
 
-    return redirect(f'/')
+    return redirect('/')
