@@ -15,7 +15,6 @@
             padding-top: 4px;
         }
         </style>
-
   </head>
   <body>
     <div class="container">
@@ -31,19 +30,33 @@
           <a class="navbar-brand" href="/secure/user">Talky</a>
         </div>
       </nav>
-
-      {% include "tools/messages.html" %}
-
       <div class="page-header">
         <h2>{{ title }}</h2>
       </div>
 
-      <form method=post enctype=multipart/form-data>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <p><input type=file name=file>
-           <input type=submit value=Upload>
-      </form>
+      {% include "tools/messages.html" %}
 
+      <div class="row">
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <div class="col-lg-6 col-sm-6 col-12 col-md-offset-3">
+            <h4>Select and upload your talk</h4>
+            <div class="input-group">
+              <label class="input-group-btn">
+                <span class="btn btn-primary">
+                  Browse&hellip; <input type="file" name="file" style="display: none;">
+                </span>
+              </label>
+              <input type="text" class="form-control" readonly>
+              <label class="input-group-btn">
+                <span class="btn btn-primary">
+                  Submit file <input type="submit" value="Upload" style="display: none;">
+                </span>
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script src="/secure/admin/static/vendor/jquery.min.js?v=2.1.4" type="text/javascript"></script>
@@ -51,5 +64,25 @@
     <script src="/secure/admin/static/vendor/moment.min.js?v=2.9.0" type="text/javascript"></script>
     <script src="/secure/admin/static/vendor/select2/select2.min.js?v=3.5.2" type="text/javascript"></script>
     <script src="/secure/admin/static/admin/js/details_filter.js?v=1.0.0"></script>
+    <script>
+      $(function() {
+        $(document).on('change', ':file', function() {
+          var input = $(this);
+          var label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+          input.trigger('fileselect', [label]);
+        });
+
+       $(document).ready( function() {
+            $(':file').on('fileselect', function(event, label) {
+                var input = $(this).parents('.input-group').find(':text');
+                if( input.length ) {
+                    input.val(label);
+                } else {
+                    if( log ) alert(log);
+                }
+            });
+        });
+      });
+    </script>
   </body>
 </html>
