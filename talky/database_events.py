@@ -28,7 +28,7 @@ def monitor_db_before_flush(session, flush_context, instances):
     changed_objects = session.new.union(session.dirty)
     for obj in changed_objects:
         if isinstance(obj, Talk):
-            update_upload_key(session, obj)
+            update_upload_key(obj)
 
 
 def update_upload_key(talk):
