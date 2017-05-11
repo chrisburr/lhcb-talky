@@ -45,7 +45,7 @@
 
 {% macro show_comment(id, name, email, comment, time, submission, replies) -%}
 <div class="media-heading" id="comment{{ id }}">
-  <button class="btn btn-default btn-collapse btn-xs" type="button" data-toggle="collapse" data-target="#collapse{{ id }}" aria-expanded="false" aria-controls="collapseExample"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button> {{ name }} <small>({{ email }}) {{ time }}</small> {% if submission %}<span class="label label-{% if submissions|length == submission %}success{% else %}default{% endif %}">v{{ submission }}</span>{% endif %}{% if modify %} <a href="comment/{{ id }}/delete/"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a>{% endif %}
+  <button class="btn btn-default btn-collapse btn-xs" type="button" data-toggle="collapse" data-target="#collapse{{ id }}" aria-expanded="false" aria-controls="collapseExample"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button> {{ name }} <small>({{ email }}) {{ time }}</small> {% if submission %}<span class="label label-{% if submissions|length == submission %}success{% else %}default{% endif %}">v{{ submission }}</span>{% endif %}{% if modify %} <a href="comment/{{ id }}/delete/" onsubmit="return confirm('Are you sure you want to delete this comment and all replies? This action cannot be reversed.');"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a>{% endif %}
 </div>
 
 <div class="panel-collapse collapse in" id="collapse{{ id }}">

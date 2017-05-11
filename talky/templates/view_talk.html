@@ -65,7 +65,7 @@
           <td><b>Submissions</b></td>
           <td><p>
             {% for submission_id, submission_version, time in submissions %}
-            {% if modify %} <a href="submission/{{ submission_id }}/delete/"><span class="glyphicon glyphicon-trash" aria-label="Delete"></span></a> {% endif -%}
+            {% if modify %} <a href="submission/{{ submission_id }}/delete/" ><span class="glyphicon glyphicon-trash" aria-label="Delete" onsubmit="return confirm('Are you sure you want to delete this submission? This action cannot be reversed.');"></span></a> {% endif -%}
             <a href="submission/v{{ submission_version }}"><span class="label label-{% if loop.last %}success{% else %}default{% endif %}">v{{ submission_version }} ({{ time }})</span></a>
             {% endfor %}
           </p></td>
@@ -85,13 +85,13 @@
           <td><b>Manage entry</b></td>
           <td class="button-container">
             <form action="/upload/{{ talk_id }}/{{ upload_key }}/">
-              <button type="button" class="btn btn-default btn-sm">
+              <button type="submit" class="btn btn-default btn-xs">
               <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
               Upload submission
               </button>
             </form>
-            <form action="/delete/{{ talk_id }}/{{ view_key }}/">
-              <button type="button" class="btn btn-default btn-sm">
+            <form action="/delete/{{ talk_id }}/{{ view_key }}/" onsubmit="return confirm('Are you sure you want to delete this talk? This action cannot be reversed.');">
+              <button type="submit" class="btn btn-default btn-xs">
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
               Delete talk
               </button>
