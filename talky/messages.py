@@ -36,7 +36,7 @@ def _validate_emails(emails):
             try:
                 assert email in ['christopher.burr@cern.ch', 'c.b@cern.ch'], email
             except AssertionError:
-                logging.warning('Skipping sending email to', email)
+                logging.warning(f'Skipping sending email to {email}')
         else:
             _valid_emails.append(email)
     return _valid_emails
