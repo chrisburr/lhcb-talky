@@ -26,20 +26,21 @@ def send_async_email(app, msg):
 
 def _validate_emails(emails):
     """While debugging ensure all emails are sent to me"""
-    _valid_emails = []
-    for email in emails:
-        try:
-            assert email.startswith('chrisburr73'), email
-            assert email[len('chrisburr73')] in ['@', '+'], email
-            assert email.endswith('@gmail.com'), email
-        except AssertionError:
-            try:
-                assert email in ['christopher.burr@cern.ch', 'c.b@cern.ch'], email
-            except AssertionError:
-                logging.warning(f'Skipping sending email to {email}')
-        else:
-            _valid_emails.append(email)
-    return _valid_emails
+    return emails
+    # _valid_emails = []
+    # for email in emails:
+    #     try:
+    #         assert email.startswith('chrisburr73'), email
+    #         assert email[len('chrisburr73')] in ['@', '+'], email
+    #         assert email.endswith('@gmail.com'), email
+    #     except AssertionError:
+    #         try:
+    #             assert email in ['christopher.burr@cern.ch', 'c.b@cern.ch'], email
+    #         except AssertionError:
+    #             logging.warning(f'Skipping sending email to {email}')
+    #     else:
+    #         _valid_emails.append(email)
+    # return _valid_emails
 
 
 def send_talk_assgined(talk):
