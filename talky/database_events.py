@@ -22,8 +22,8 @@ def delete_file(mapper, connection, target):
             pass
 
 
-@listens_for(db.session, 'before_flush')
-def monitor_db(session, flush_context, instances):
+@listens_for(db.session, 'after_flush')
+def monitor_db(session, flush_context):
     """Monitor for changes in the database"""
     changed_objects = session.new.union(session.dirty)
     for obj in changed_objects:
