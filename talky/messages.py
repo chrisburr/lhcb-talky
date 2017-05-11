@@ -1,4 +1,5 @@
 import logging
+from threading import Thread
 
 from flask_mail import Message
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -15,6 +16,12 @@ env = Environment(
     loader=PackageLoader('talky', 'templates/email'),
     autoescape=select_autoescape(['html', 'xml'])
 )
+
+
+def send_async_email(app, msg):
+    with app.app_context():
+        # TODO Notify me if this goes wrong
+        mail.send(msg)
 
 
 def _validate_emails(emails):
@@ -35,7 +42,9 @@ def send_talk_assgined(talk):
         domain=app.config['TALKY_DOMAIN']
     ))
     msg.recipients = _validate_emails([talk.speaker])
-    mail.send(msg)
+
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()
 
 
 def send_new_talk_available(submission):
@@ -64,7 +73,8 @@ def send_new_talk_available(submission):
     # Sent the email
     msg.bcc = _validate_emails(recipients)
 
-    mail.send(msg)
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()
 
 
 def send_new_comment(comment):
@@ -90,4 +100,5 @@ def send_new_comment(comment):
     # Sent the email
     msg.bcc = _validate_emails(recipients)
 
-    mail.send(msg)
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()

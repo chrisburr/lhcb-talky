@@ -33,7 +33,7 @@
       </nav>
 
       <div class="page-header">
-        <h2>{{ title }}{% if modify %} <small><a href="/upload/{{ talk_id }}/{{ upload_key }}/"><span class="label label-warning">Upload submission</span>{% endif %}</a></small></h2>
+        <h2>{{ title }}</h2>
       </div>
 
       <h1></h1>
@@ -71,6 +71,15 @@
             {% endfor %}{% endif %}
           </td>
         </tr>
+        {% if modify -%}
+
+        <tr>
+          <td><b>Manage entry</b></td>
+          <td>
+            <p><a href="/upload/{{ talk_id }}/{{ upload_key }}/"><span class="label label-warning">Upload submission</span></a></p>
+          </td>
+        </tr>
+        {%- endif %}
       </table>
 
       {% include 'comments.html' %}
