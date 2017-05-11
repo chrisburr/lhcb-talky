@@ -33,6 +33,12 @@ interesting_talks_experiment = db.Table(
     db.Column('talk_id', db.Integer(), db.ForeignKey('talk.id')),
 )
 
+talk_categories = db.Table(
+    'talk_categories',
+    db.Column('category_id', db.Integer(), db.ForeignKey('category.id')),
+    db.Column('talk_id', db.Integer(), db.ForeignKey('talk.id')),
+)
+
 
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
@@ -145,6 +151,11 @@ class Talk(db.Model):
     interesting_to = db.relationship(
         'Experiment', secondary=interesting_talks_experiment,
         backref=db.backref('interesting_talks')
+    )
+
+    categories = db.relationship(
+        'Category', secondary=talk_categories,
+        backref=db.backref('talks')
     )
 
     view_key = db.Column(db.String(200), nullable=False, default=secrets.token_urlsafe)
