@@ -28,14 +28,14 @@ def monitor_db(session, flush_context):
     changed_objects = session.new.union(session.dirty)
     for obj in changed_objects:
         if isinstance(obj, Talk):
-            talk_changed(obj)
+            talk_changed(session, obj)
         if isinstance(obj, Submission):
-            submission_received(obj)
+            submission_received(session, obj)
         if isinstance(obj, Comment):
-            new_comment(obj)
+            new_comment(session, obj)
 
 
-def talk_changed(talk):
+def talk_changed(session, talk):
     """If the speaker changes generate a new modified key and notify them"""
     attribute_state = inspect(talk).attrs.get('speaker')
     # Check if the speaker has been updated
@@ -43,11 +43,12 @@ def talk_changed(talk):
     if history.has_changes():
         # Update the upload key
         talk.upload_key = secrets.token_urlsafe()
+        session.commit()
         # Send a new email to the speaker
         messages.send_talk_assgined(talk)
 
 
-def submission_received(submission):
+def submission_received(session, submission):
     """Send notifications if this is the first submission"""
     attribute_state = inspect(submission).attrs.get('version')
     # Check if the speaker has been updated
@@ -57,7 +58,7 @@ def submission_received(submission):
         messages.send_new_talk_available(submission)
 
 
-def new_comment(comment):
+def new_comment(session, comment):
     """Send notifications of new comments"""
     attribute_state = inspect(comment).attrs.get('comment')
     # Check if the speaker has been updated
