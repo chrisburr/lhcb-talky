@@ -153,18 +153,18 @@ class DBConferenceView(object):
 class DBTalkView(object):
     can_view_details = True
     column_details_list = (
-        'conference', 'title', 'duration', 'experiment', 'speaker',
-        'interesting_to', 'abstract'
+        'conference', 'title', 'duration', 'experiment', 'categories',
+        'speaker', 'interesting_to', 'abstract'
     )
     can_export = True
     _table_class = schema.Talk
     _form_columns = (
-        'conference', 'title', 'duration', 'experiment', 'speaker',
-        'interesting_to', 'abstract'
+        'conference', 'title', 'duration', 'experiment', 'categories',
+        'speaker', 'interesting_to', 'abstract'
     )
     _column_list = (
-        'conference', 'title', 'duration', 'experiment', 'speaker',
-        'interesting_to'
+        'conference', 'title', 'duration', 'experiment',  'categories',
+        'speaker', 'interesting_to'
     )
     _add_filter = []
 
