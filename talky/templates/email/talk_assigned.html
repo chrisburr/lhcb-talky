@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title -%}
+{{ subject }}
+{%- endblock %}
+
+{% block preheader -%}
+Please upload presentation for "{{ talk.title }}"
+{%- endblock %}
+
+{% block body -%}
+<tr>
+  <td class="wrapper">
+    <table border="0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td>
+          <p>Dear speaker,</p>
+          <p>You have been assigned to the talk entitled "<a href="{{ domain }}/view/{{ talk.id }}/{{ talk.view_key }}/">{{ talk.title }}</a>" at {{ talk.conference.name }} starting on {talk.conference_date}. This talk has been flagged as being of interest to other experiments by the speaker's bureau of {{ talk.experiment.name }}.</p>
+          <p> Please upload you presentation and any further revisions using the button below. After uploading your slides all relevant parties will be notified and able to make comments.</p>
+          <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+            <tbody>
+              <tr>
+                <td align="center">
+                  <table border="0" cellpadding="0" cellspacing="5">
+                    <tbody>
+                      <tr>
+                        <td> <a href="{{ domain }}/view/{{ talk.id }}/{{ talk.view_key }}/" target="_blank">View talk</a> </td>
+                        <td> <a href="{{ domain} }/upload/{{ talk.id }}/{{ talk.upload_key }}/" target="_blank">Upload slides</a> </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+{%- endblock %}

@@ -1,7 +1,14 @@
 from flask_mail import Message
+from jinja2 import Environment, PackageLoader, select_autoescape
+from premailer import transform
 
 from . import schema
 from .talky import app, mail
+
+env = Environment(
+    loader=PackageLoader('talky', 'templates/email'),
+    autoescape=select_autoescape(['html', 'xml'])
+)
 
 
 def _validate_emails(emails):
@@ -14,25 +21,13 @@ def _validate_emails(emails):
 
 
 def send_talk_assgined(talk):
-    msg = Message(f'You have been assigned to a talk - {talk.title}')
-    msg.html = (
-        f'Dear speaker,\n'
-        f'\n'
-        f'You have been assigned to the talk entitled "<a href='
-        f'"{app.config["TALKY_DOMAIN"]}/view/{talk.id}/{talk.view_key}/"'
-        f'>{talk.title}</a>" at {talk.conference.name} starting on '
-        '{talk.conference_date}.\n'
-        f'\n'
-        f'Please upload you presentation and any further revisions using the '
-        f'form <a href='
-        f'"{app.config["TALKY_DOMAIN"]}/upload/{talk.id}/{talk.upload_key}/"'
-        f'>available here</a>. '
-        f'After uploading your slides all relevant parties will be notified '
-        f'and able to make comments.\n'
-        f'\n'
-        f'Issues with talky can be reported using the <a href='
-        f'"https://github.com/chrisburr/lhcb-talky">talky issue tracker</a>.\n'
-    )
+    subject = f'You have been assigned to a talk - {talk.title}'
+    msg = Message(subject)
+    msg.html = transform(env.get_template('talk_assigned.html').render(
+        subject=subject,
+        talk=talk,
+        domain=app.config['TALKY_DOMAIN']
+    ))
     msg.reply_to = _validate_emails(['chrisburr73+reply_to@gmail.com'])[0]
     msg.recipients = _validate_emails([talk.speaker])
     mail.send(msg)
@@ -42,7 +37,7 @@ def send_new_talk_available(submission):
     talk = submission.talk
     msg = Message(f'New talk uploaded - {submission.talk.title}')
     msg.recipients = ['chrisburr73@gmail.com']
-    msg.body = (
+    msg.html = (
         f'You have received this email as you have been flagged as an '
         f'interested party in the talk entitled "<a href='
         f'"{app.config["TALKY_DOMAIN"]}/view/{talk.id}/{talk.view_key}/"'
@@ -79,7 +74,7 @@ def send_new_comment(comment):
     talk = comment.talk
     msg = Message(f'New comment received on {comment.talk.title}')
     msg.recipients = ['chrisburr73@gmail.com']
-    msg.body = (
+    msg.html = (
         f'A new comment has been submitted by '
         f'<a href="mailto:{comment.email}">{comment.name}</a> on "<a href='
         f'"{app.config["TALKY_DOMAIN"]}/view/{talk.id}/{talk.view_key}/"'

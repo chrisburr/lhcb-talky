@@ -2,12 +2,15 @@ import os
 from os.path import dirname, join
 
 # Create directory for file fields to use
-cleanup_files = True
-file_path = join(dirname(__file__), 'files')
+CLEANUP_FILES = False
+FILE_PATH = join(dirname(__file__), 'files')
 try:
-    os.mkdir(file_path)
+    os.mkdir(FILE_PATH)
 except OSError:
     pass
+
+# The domain talky is hosted at
+TALKY_DOMAIN = 'http://localhost:5000'
 
 # Create secret key so we can use sessions
 SECRET_KEY = 'CHANGE_ME'
@@ -18,7 +21,7 @@ MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 # Create in-memory database
 DATABASE_FILE = 'sample_db.sqlite'
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DATABASE_FILE
-SQLALCHEMY_ECHO = True
+SQLALCHEMY_ECHO = False
 
 # Flask-Mail config
 MAIL_SERVER = 'CHANGE_ME'
