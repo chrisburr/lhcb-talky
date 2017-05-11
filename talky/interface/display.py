@@ -257,3 +257,17 @@ def delete_submission(talk_id=None, view_key=None, submission_id=None):
     schema.db.session.commit()
 
     return redirect(f'/view/{talk_id}/{view_key}/')
+
+
+@app.route('/delete/<talk_id>/<view_key>/', methods=['GET'])
+def delete_talk(talk_id=None, view_key=None):
+    talk = get_talk(talk_id, view_key=view_key)
+    if not user_can_edit(talk):
+        log.warning(f'Blocked attempt to delete talk {talk_id}')
+        abort(404)
+
+    log.info(f'Removing talk {talk_id}')
+    schema.db.session.delete(talk)
+    schema.db.session.commit()
+
+    return redirect(f'/')
