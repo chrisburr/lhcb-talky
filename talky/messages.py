@@ -1,9 +1,15 @@
+import logging
+
 from flask_mail import Message
 from jinja2 import Environment, PackageLoader, select_autoescape
 from premailer import transform
+import cssutils
 
 from . import schema
 from .talky import app, mail
+
+# Suppress error messages from premailer
+cssutils.log.setLevel(logging.CRITICAL)
 
 env = Environment(
     loader=PackageLoader('talky', 'templates/email'),
@@ -28,31 +34,21 @@ def send_talk_assgined(talk):
         talk=talk,
         domain=app.config['TALKY_DOMAIN']
     ))
-    msg.reply_to = _validate_emails(['chrisburr73+reply_to@gmail.com'])[0]
     msg.recipients = _validate_emails([talk.speaker])
     mail.send(msg)
 
 
 def send_new_talk_available(submission):
     talk = submission.talk
-    msg = Message(f'New talk uploaded - {submission.talk.title}')
-    msg.recipients = ['chrisburr73@gmail.com']
-    msg.html = (
-        f'You have received this email as you have been flagged as an '
-        f'interested party in the talk entitled "<a href='
-        f'"{app.config["TALKY_DOMAIN"]}/view/{talk.id}/{talk.view_key}/"'
-        f'>{talk.title}</a>" at that will be given at {talk.conference.name} '
-        f'starting on {talk.conference_date}.\n'
-        f'\n'
-        f'Slides are now available to view and you may leave comments on the '
-        f'above page. You will not be notified of further revisions however '
-        f'you will be in the event someone replies to a comment left by you.\n'
-        f'\n'
-        f'Issues with talky can be reported using the <a href='
-        f'"https://github.com/chrisburr/lhcb-talky">talky issue tracker</a>.\n'
-    )
-    _validate_emails(msg.recipients)
-    msg.reply_to = _validate_emails(['chrisburr73+reply_to@gmail.com'])[0]
+    subject = f'New talk uploaded - {submission.talk.title}'
+
+    msg = Message(subject)
+    msg.html = transform(env.get_template('new_talk_available.html').render(
+        subject=subject,
+        talk=talk,
+        domain=app.config['TALKY_DOMAIN']
+    ))
+
     # Send notifications to the members of this and flagged experiments
     recipients = []
     for user in schema.User.query.all():
@@ -67,30 +63,22 @@ def send_new_talk_available(submission):
     recipients = list(set(recipients))
     # Sent the email
     msg.bcc = _validate_emails(recipients)
+
     mail.send(msg)
 
 
 def send_new_comment(comment):
     talk = comment.talk
-    msg = Message(f'New comment received on {comment.talk.title}')
-    msg.recipients = ['chrisburr73@gmail.com']
-    msg.html = (
-        f'A new comment has been submitted by '
-        f'<a href="mailto:{comment.email}">{comment.name}</a> on "<a href='
-        f'"{app.config["TALKY_DOMAIN"]}/view/{talk.id}/{talk.view_key}/"'
-        f'>{talk.title}</a>" at that will be given at {talk.conference.name} '
-        f'starting on {talk.conference_date}.\n'
-        f'\n'
-        f'The comment text is:\n'
-        f'{comment.comment}\n'
-        f'\n'
-        f'You may reply using the talk page linked above.\n'
-        f'\n'
-        f'Issues with talky can be reported using the <a href='
-        f'"https://github.com/chrisburr/lhcb-talky">talky issue tracker</a>.\n'
-    )
-    _validate_emails(msg.recipients)
-    msg.reply_to = _validate_emails(['chrisburr73+reply_to@gmail.com'])[0]
+    subject = f'New comment received on {comment.talk.title}'
+
+    msg = Message(subject)
+    msg.html = transform(env.get_template('new_comment.html').render(
+        subject=subject,
+        talk=talk,
+        comment=comment,
+        domain=app.config['TALKY_DOMAIN']
+    ))
+
     # Always sent notification if replies to the speaker
     recipients = [talk.speaker]
     # TODO Send notification of the replies to any parent commentators
@@ -101,4 +89,5 @@ def send_new_comment(comment):
         recipients.pop(recipients.index(comment.email))
     # Sent the email
     msg.bcc = _validate_emails(recipients)
+
     mail.send(msg)

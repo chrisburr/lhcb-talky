@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title -%}
+{{ subject }}
+{%- endblock %}
+
+{% block preheader -%}
+{%- endblock %}
+
+{% block body -%}
+<tr>
+  <td class="wrapper">
+    <table border="0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td>
+          <p>A new comment has been submitted by <a href="mailto:{{ comment.email }}">{{ comment.name }}</a> on "<a href="{{ domain }}/view/{{ talk.id }}/{{ talk.view_key }}/">{{ talk.title }}</a>" at that will be given at {talk.conference.name} starting on {{ talk.conference_date }}.</p>
+          <p>The comment text is:</p>
+          <p>{% for line in comment.comment.splitlines() %}{{ line }}<br \>{% endfor %}</p>
+          <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+            <tbody>
+              <tr>
+                <td align="center">
+                  <table border="0" cellpadding="0" cellspacing="5">
+                    <tbody>
+                      <tr>
+                        <td> <a href="{{ domain }}/view/{{ talk.id }}/{{ talk.view_key }}/#comment{{ comment.id }}" target="_blank">View comment</a> </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+{%- endblock %}

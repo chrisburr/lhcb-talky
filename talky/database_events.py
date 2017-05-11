@@ -22,12 +22,6 @@ def delete_file(mapper, connection, target):
             pass
 
 
-@listens_for(Talk, 'after_insert')
-def new_talk_assigned(mapper, connection, target):
-    """Send notifications if this is the first submission"""
-    messages.send_talk_assgined(target)
-
-
 @listens_for(db.session, 'before_flush')
 def talk_reassigned(session, flush_context, instances):
     """Send notifications and change upload_key if the speaker is changed"""
