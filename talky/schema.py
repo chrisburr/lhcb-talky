@@ -41,6 +41,8 @@ talk_categories = db.Table(
 
 
 class Role(db.Model, RoleMixin):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
@@ -50,6 +52,8 @@ class Role(db.Model, RoleMixin):
 
 
 class User(db.Model, UserMixin):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
@@ -66,6 +70,8 @@ class User(db.Model, UserMixin):
 
 
 class Experiment(db.Model):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
 
@@ -74,6 +80,8 @@ class Experiment(db.Model):
 
 
 class Conference(db.Model):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     url = db.Column(db.String(1000))
@@ -85,6 +93,8 @@ class Conference(db.Model):
 
 
 class Comment(db.Model):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(200), nullable=False)
@@ -105,6 +115,8 @@ class Comment(db.Model):
 
 
 class Submission(db.Model):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     time = db.Column(db.DateTime())
     talk_id = db.Column(db.Integer, db.ForeignKey('talk.id', ondelete='CASCADE'), nullable=False)
@@ -118,6 +130,8 @@ class Submission(db.Model):
 
 
 class Category(db.Model):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), nullable=False)
 
@@ -131,6 +145,8 @@ class Category(db.Model):
 
 
 class Talk(db.Model):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     abstract = db.Column(db.String(100000))
@@ -166,6 +182,8 @@ class Talk(db.Model):
 
 
 class Contact(db.Model):
+    __table_args__ = {'sqlite_autoincrement': True}
+
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String(200), nullable=False)
 
