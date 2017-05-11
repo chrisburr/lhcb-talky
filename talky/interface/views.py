@@ -166,9 +166,9 @@ class DBTalkView(object):
         'conference', 'title', 'duration', 'experiment',  'categories',
         'speaker', 'interesting_to'
     )
-    _add_filter = []
+    _add_filter = [('categories', schema.Category)]
 
-    def _make_filter(self, model):
+    def _make_filter_2(self, model):
         def filter_by_experiment():
             return model.query.filter(model.id.isnot(current_user.experiment.id)).all()
         return filter_by_experiment
@@ -177,7 +177,9 @@ class DBTalkView(object):
         try:
             form = super(UserView, self).create_form()
             # Filter any query based fields to limit them to the current experiment
-            getattr(form, 'interesting_to').query_factory = self._make_filter(schema.Experiment)
+            getattr(form, 'interesting_to').query_factory = self._make_filter_2(schema.Experiment)
+            for name, model in self._add_filter:
+                getattr(form, name).query_factory = self._make_filter(model)
         except TypeError:
             form = super(AdminView, self).create_form()
         return form
