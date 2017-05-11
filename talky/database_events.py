@@ -23,31 +23,45 @@ def delete_file(mapper, connection, target):
 
 
 @listens_for(db.session, 'before_flush')
-def talk_reassigned(session, flush_context, instances):
-    """Send notifications and change upload_key if the speaker is changed"""
+def monitor_db(session, flush_context, instances):
+    """Monitor for changes in the database"""
     changed_objects = session.new.union(session.dirty)
-    for talk in changed_objects:
-        if not isinstance(talk, Talk):
-            continue
-        attribute_state = inspect(talk).attrs.get('speaker')
-        # Check if the speaker has been updated
-        history = attribute_state.history
-        if not history.has_changes():
-            continue
+    for obj in changed_objects:
+        if isinstance(obj, Talk):
+            talk_changed(obj)
+        if isinstance(obj, Submission):
+            submission_received(obj)
+        if isinstance(obj, Comment):
+            new_comment(obj)
+
+
+def talk_changed(talk):
+    """If the speaker changes generate a new modified key and notify them"""
+    attribute_state = inspect(talk).attrs.get('speaker')
+    # Check if the speaker has been updated
+    history = attribute_state.history
+    if history.has_changes():
         # Update the upload key
         talk.upload_key = secrets.token_urlsafe()
         # Send a new email to the speaker
         messages.send_talk_assgined(talk)
 
 
-@listens_for(Submission, 'after_insert')
-def new_talk_received(mapper, connection, target):
+def submission_received(submission):
     """Send notifications if this is the first submission"""
-    if target.version == 1:
-        messages.send_new_talk_available(target)
+    attribute_state = inspect(submission).attrs.get('version')
+    # Check if the speaker has been updated
+    history = attribute_state.history
+    # TODO Check for insert rather than assuming the version is immutable
+    if history.has_changes() and submission.version == 1:
+        messages.send_new_talk_available(submission)
 
 
-@listens_for(Comment, 'after_insert')
-def new_comment(mapper, connection, target):
-    """Send notifications if this is the first submission"""
-    messages.send_new_comment(target)
+def new_comment(comment):
+    """Send notifications of new comments"""
+    attribute_state = inspect(comment).attrs.get('version')
+    # Check if the speaker has been updated
+    history = attribute_state.history
+    # TODO Check for insert rather than assuming the comment is immutable
+    if history.has_changes():
+        messages.send_new_comment(comment)

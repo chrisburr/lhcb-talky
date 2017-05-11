@@ -27,9 +27,12 @@ def send_async_email(app, msg):
 def _validate_emails(emails):
     """While debugging ensure all emails are sent to me"""
     for email in emails:
-        assert email.startswith('chrisburr73'), email
-        assert email[len('chrisburr73')] in ['@', '+'], email
-        assert email.endswith('@gmail.com'), email
+        try:
+            assert email.startswith('chrisburr73'), email
+            assert email[len('chrisburr73')] in ['@', '+'], email
+            assert email.endswith('@gmail.com'), email
+        except AssertionError:
+            assert email in ['christopher.burr@cern.ch', 'c.b@cern.ch']
     return emails
 
 
