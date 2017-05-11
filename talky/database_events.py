@@ -59,7 +59,7 @@ def submission_received(submission):
 
 def new_comment(comment):
     """Send notifications of new comments"""
-    attribute_state = inspect(comment).attrs.get('version')
+    attribute_state = inspect(comment).attrs.get('comment')
     # Check if the speaker has been updated
     history = attribute_state.history
     # TODO Check for insert rather than assuming the comment is immutable

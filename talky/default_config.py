@@ -1,9 +1,9 @@
 import os
-from os.path import dirname, join
+from os.path import dirname, join, abspath
 
 # Create directory for file fields to use
 CLEANUP_FILES = False
-FILE_PATH = join(dirname(__file__), 'files')
+FILE_PATH = abspath(join(dirname(__file__), 'files'))
 try:
     os.mkdir(FILE_PATH)
 except OSError:

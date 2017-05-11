@@ -1,3 +1,5 @@
+import logging
+
 import colorlog
 
 from .talky import app, mail
@@ -15,6 +17,7 @@ handler = colorlog.StreamHandler()
 handler.setFormatter(colorlog.ColoredFormatter(
     '%(log_color)s%(levelname)s:%(name)s:%(message)s'
 ))
+handler.setLevel(logging.INFO)
 
 logger = colorlog.getLogger()
 logger.addHandler(handler)
